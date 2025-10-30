@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -18,10 +19,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -83,7 +87,7 @@ fun HomeScreen() {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(Color.White)
+//                .background(Color.White)
                 .padding(bottom = 4.dp)
         ) {
             NavigationBar()
@@ -102,7 +106,14 @@ fun GreetingSection(user: User) {
             Text(
                 text = "Hello, ",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Normal
+                fontWeight = FontWeight.Normal,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color.DarkGray.copy(alpha = 0.5f),
+                        offset = Offset(5f, 5f),
+                        blurRadius = 2f
+                    )
+                )
             )
             Box(
                 contentAlignment = Alignment.Center
@@ -131,6 +142,13 @@ fun GreetingSection(user: User) {
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Gray.copy(alpha = 0.5f),
+                            offset = Offset(5f, 5f),
+                            blurRadius = 2f
+                        )
+                    ),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
                 )
             }
@@ -138,7 +156,9 @@ fun GreetingSection(user: User) {
         Image(
             painter = painterResource(R.drawable.pillpal_icon),
             contentDescription = "PillPal Icon",
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier
+                .size(90.dp)
+                .padding(top = 8.dp)
         )
     }
 }
@@ -159,13 +179,15 @@ fun DateSection() {
             fontSize = 24.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
+                .clickable { /* navigate to calendar */ }
         )
 //        Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "»", // double arrow character
+            text = "»",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold, // optional
             modifier = Modifier
+                .clickable { /* navigate to calendar */ }
                 .padding(start = 8.dp, bottom = 4.dp),
             color = Color.Black
         )
@@ -177,12 +199,9 @@ fun ProfileCard(user: User) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = Color.Black,
-                shape = RoundedCornerShape(10.dp)
-            ),
+            .border( width = 1.dp, color = Color.Black, shape = RoundedCornerShape(10.dp) ),
         shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFE9F5FF)
         )
@@ -216,6 +235,12 @@ fun ProfileCard(user: User) {
 
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    Text(
+                        text = ".☆ ˖ִ ࣪⚝₊ ⊹˚",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Left
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -357,7 +382,8 @@ fun MedicationSection(medications: List<Medication>) {
         Text(
             text = "Week $weekNumber",
             fontSize = 14.sp,
-            color = Color.Gray
+//            color = Color.Gray
+            color = Color.Black
         )
     }
 
@@ -365,7 +391,8 @@ fun MedicationSection(medications: List<Medication>) {
     HorizontalDivider(
         modifier = Modifier.padding(vertical = 8.dp),
         thickness = 1.dp,
-        color = Color(0xFFE8E8E8)
+//        color = Color(0xFFE8E8E8)
+        color = Color.Black
     )
 
     Column(
@@ -423,7 +450,9 @@ fun MedicationItem(medication: Medication) {
             Text(
                 text = medication.name,
                 fontSize = 16.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .clickable { /* navigate to edit medication */ }
             )
         }
 
@@ -431,7 +460,8 @@ fun MedicationItem(medication: Medication) {
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             modifier = Modifier
-                .size(28.dp),
+                .size(28.dp)
+                .clickable { /* navigate */ },
             tint = Color.Black
         )
     }
@@ -442,20 +472,24 @@ fun NavigationBar() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 0.dp),
+            .padding(horizontal = 50.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // home
         NavigationButton(
             iconRes = R.drawable.home,
-            contentDescription = null
+            contentDescription = null,
+            modifier = Modifier
+                .clickable { /* navigate to home */ },
         )
 
         // history
         NavigationButton(
             iconRes = R.drawable.history,
-            contentDescription = null
+            contentDescription = null,
+            modifier = Modifier
+                .clickable { /* navigate to history */ },
         )
 
         // add/calendar
@@ -463,9 +497,10 @@ fun NavigationBar() {
             modifier = Modifier
                 .size(64.dp)
                 .background(
-                    color = Color(0xFFF5F0ED), // button color
+                    color = Color(0xFFF5F0ED), // circle color
                     shape = CircleShape
-                ),
+                )
+                .clickable { /* navigation to add/calendar */ },
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -476,13 +511,13 @@ fun NavigationBar() {
                 Icon(
                     painter = painterResource(R.drawable.add_calendar),
                     contentDescription = null,
-                    modifier = Modifier.size(26.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = Color.Unspecified
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "add",
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black
                 )
@@ -492,23 +527,27 @@ fun NavigationBar() {
         // notifs
         NavigationButton(
             iconRes = R.drawable.bell,
-            contentDescription = null
+            contentDescription = null,
+            modifier = Modifier
+                .clickable { /* navigate to notifs */ },
         )
 
         // settings
         NavigationButton(
             iconRes = R.drawable.user_settings,
-            contentDescription = null
+            contentDescription = null,
+            modifier = Modifier
+                .clickable { /* navigate to settings */ },
         )
     }
 }
 
 @Composable
-fun NavigationButton(iconRes: Int, contentDescription: String?) {
+fun NavigationButton(iconRes: Int, contentDescription: String?, modifier: Modifier) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(50.dp)
+                .size(45.dp)
                 .background(
                     color = Color(0xFFD7D4CF),
                     shape = CircleShape
