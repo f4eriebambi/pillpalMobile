@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.PillPalMobile" parent="Theme.Material3.DayNight">
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorSecondary">@color/purple_700</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
 
-    <style name="Theme.PillPalMobile" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.PillPalMobile" parent="Base.Theme.PillPalMobile" />
 </resources>

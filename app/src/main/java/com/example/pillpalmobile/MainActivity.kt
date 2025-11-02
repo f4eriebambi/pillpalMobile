@@ -34,6 +34,7 @@ import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
@@ -45,14 +46,69 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PillPalMobileTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color.White
-                ) {
-                    HomeScreen()
-                }
+                MainApp()
             }
         }
+    }
+}
+
+@Composable
+fun MainApp() {
+    var showSplash by remember { mutableStateOf(true) }
+
+    if (showSplash) {
+        SplashScreen {
+            showSplash = false
+        }
+    } else {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.White
+        ) {
+            HomeScreen()
+        }
+    }
+}
+
+@Composable
+fun SplashScreen(onLoadingComplete: () -> Unit) {
+
+    LaunchedEffect(Unit) {
+        delay(2000)
+        onLoadingComplete()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.deco_stars),
+            contentDescription = "Decorative Stars",
+            modifier = Modifier
+                .size(400.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 50.dp, y = (-20).dp)
+        )
+
+        Image(
+            painter = painterResource(R.drawable.pillpal_logo),
+            contentDescription = "PillPal Logo",
+            modifier = Modifier
+                .size(250.dp)
+                .align(Alignment.Center)
+                .offset(y = (-50).dp),
+            contentScale = ContentScale.Fit
+        )
+
+                    CircularProgressIndicator(
+            color = Color(0xFF638097),
+            modifier = Modifier
+                .size(40.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp)
+        )
     }
 }
 
