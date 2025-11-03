@@ -2,6 +2,7 @@ package com.example.pillpalmobile.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,17 +14,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillpalmobile.R
+
+
+// https://medium.com/@emmanuelmuturia/how-to-mask-your-password-in-android-jetpack-compose-3a0deee6c15b
+
 
 @Composable
 fun LoginScreen(
@@ -33,6 +39,7 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -116,6 +123,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // divider
             Image(
                 painter = painterResource(R.drawable.pillpal_team),
                 contentDescription = null,
@@ -142,13 +150,36 @@ fun LoginScreen(
                 placeholder = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            painter = painterResource(
+                                if (passwordVisible) R.drawable.password_show else R.drawable.password_hide
+                            ),
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                },
                 shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.Black,
                     unfocusedBorderColor = Color.Gray
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            )
+
+            // forget password link (migth remove)
+            Text(
+                text = "Forgot Password?",
+                fontSize = 14.sp,
+                color = Color.Black,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = 8.dp)
+                    .clickable { onForgotPassword() }
             )
         }
     }
