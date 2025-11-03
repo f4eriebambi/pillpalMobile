@@ -19,8 +19,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -50,10 +53,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White
                 ) {
-                    WelcomeScreen(
-                        onNavigateToLogin = { /* need to do login screen */ },
-                        onNavigateToSignUp = { /* need to do signup screen */ }
-                    )
+                    HomeScreen()
+//                    WelcomeScreen(
+//                        onNavigateToLogin = { /* need to do login screen */ },
+//                        onNavigateToSignUp = { /* need to do signup screen */ }
+//                    )
                 }
             }
         }
@@ -65,6 +69,16 @@ fun HomeScreen() {
     val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.deco_stars),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(Color.Gray),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(380.dp)
+                .offset(x = 40.dp, y = 54.dp)
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -87,6 +101,7 @@ fun HomeScreen() {
             MedicationSection(medications = DataSource.medications)
         }
 
+        // nav abr
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -96,6 +111,31 @@ fun HomeScreen() {
         ) {
             NavigationBar()
         }
+        Image(
+            painter = painterResource(R.drawable.deco_starspiral2),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(115.dp)
+                .offset(x = (-25).dp, y = (-618).dp)
+        )
+        Image(
+            painter = painterResource(R.drawable.deco_symbol),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(150.dp)
+                .offset(x = (-3).dp, y = (-380).dp)
+        )
+        Image(
+            painter = painterResource(R.drawable.pillpal_team),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .rotate(-90f)
+                .size(310.dp)
+                .offset(x = (110).dp, y = (-175).dp)
+        )
     }
 }
 
@@ -188,7 +228,7 @@ fun DateSection() {
 //        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "»",
-            fontSize = 28.sp,
+            fontSize = 30.sp,
             fontWeight = FontWeight.Bold, // optional
             modifier = Modifier
                 .clickable { /* navigate to calendar */ }
@@ -203,167 +243,180 @@ fun ProfileCard(user: User) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border( width = 1.dp, color = Color.Black, shape = RoundedCornerShape(10.dp) ),
+            .shadow(
+                elevation = 8.dp,
+                spotColor = Color(0x55000000),
+                ambientColor = Color(0x33000000),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .border(1.dp, Color.Black, RoundedCornerShape(10.dp)),
         shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE9F5FF)
-        )
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE9F5FF))
     ) {
         Column(
-            modifier = Modifier.padding(18.dp)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
         ) {
             // star border
             Text(
-                text = "✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
+                text = "✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
                 fontSize = 10.sp,
-                textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(user.avatarRes),
-                        contentDescription = null,
+//                    Image(
+//                        painter = painterResource(user.avatarRes),
+//                        contentDescription = null,
+//                        modifier = Modifier
+//                            .size(100.dp)
+//                            .border(1.5.dp, Color.Black, padding ),
+//                        contentScale = ContentScale.Crop
+//                    )
+                    Box(
                         modifier = Modifier
-                            .size(110.dp)
-                            .border(1.5.dp, Color.Black),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
+                            .size(width = 110.dp, height = 109.dp)
+                            .border(2.dp, Color.Black)
+                            .background(Color.White)
+                    ) {
+                        Image(
+                            painter = painterResource(user.avatarRes),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(width = 84.dp, height = 84.dp)
+                                .align(Alignment.Center),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = ".☆ ˖ִ ࣪⚝₊ ⊹˚",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Left
+                        modifier = Modifier.offset(x = (-30).dp, y = (-19).dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(20.dp))
 
-                // user details
-                Column(modifier = Modifier.weight(1f)) {
+                // user info
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         text = "PillPal ID",
-                        fontSize = 20.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "--------------------------",
-                        fontSize = 20.sp,
+                        text = "----------------------------",
                         color = Color(0xFF638097),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        fontSize = 15.sp,
+                        textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        // name
-                        Column {
-                            Row {
-                                Text("Name: ", fontSize = 13.sp, color = Color.Gray)
-                                Text(
-                                    user.name,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                            Text(
-                                text = "......................",
-                                color = Color(0xFF638097),
-                                fontSize = 14.sp
-                            )
-                        }
+                    // name
+                    ProfileField(label = "Name:     ", value = user.name)
+                    Spacer(modifier = Modifier.height(1.dp))
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                    // nickname
+                    ProfileField(label = "Nickname:     ", value = user.nickname ?: "N/A")
+                    Spacer(modifier = Modifier.height(1.dp))
 
-                        // nickname
-                        Column {
-                            Row {
-                                Text("Nickname: ", fontSize = 13.sp, color = Color.Gray)
-                                Text(
-                                    user.nickname ?: "N/A",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                            Text(
-                                text = "......................",
-                                color = Color(0xFF638097),
-                                fontSize = 14.sp
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // birthday
-                        Column {
-                            Row {
-                                Text("Birthday: ", fontSize = 13.sp, color = Color.Gray)
-                                Text(
-                                    user.birthday,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                            Text(
-                                text = "......................",
-                                color = Color(0xFF638097),
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
+                    // birthday
+                    ProfileField(label = "Birthday:     ", value = user.birthday)
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // date joined
+            // date joined section + stars
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = user.dateJoined,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Right,
+                    modifier = Modifier.fillMaxWidth(),
+                    lineHeight = 13.sp
+                )
+                Text(
+                    text = "----------------------------",
+                    color = Color(0xFF638097),
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Right,
+                    modifier = Modifier.fillMaxWidth(),
+                    lineHeight = 12.sp
+                )
+
+                // stars + joined
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = " ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 10.sp
+                    )
+                    Text(
+                        text = "Date of Issue (Joined)",
+                        fontSize = 10.sp,
+                        textAlign = TextAlign.Right,
+                        lineHeight = 10.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
+}
+
+@Composable
+fun ProfileField(label: String, value: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = user.dateJoined,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = "--------------------------",
-                fontSize = 18.sp,
-                color = Color(0xFF638097),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = "Date of Issue (Joined)",
-                fontSize = 13.sp,
+                text = label,
+                fontSize = 12.sp,
                 color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                lineHeight = 10.sp
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // star border
             Text(
-                text = " ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
-                fontSize = 16.sp,
-                textAlign = TextAlign.Left,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth()
+                text = value,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black,
+                lineHeight = 13.sp
             )
         }
+        Text(
+            text = ".....................................................",
+            color = Color(0xFF638097),
+            fontSize = 8.sp,
+            lineHeight = 8.sp,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -375,7 +428,7 @@ fun MedicationSection(medications: List<Medication>) {
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+//        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -384,8 +437,8 @@ fun MedicationSection(medications: List<Medication>) {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Week $weekNumber",
-            fontSize = 14.sp,
+            text = "    Week $weekNumber",
+            fontSize = 15.sp,
 //            color = Color.Gray
             color = Color.Black
         )
@@ -402,6 +455,7 @@ fun MedicationSection(medications: List<Medication>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(max = 390.dp)
             .background(
                 color = Color(0xFFF9F8F1),
                 shape = RoundedCornerShape(12.dp)
@@ -429,7 +483,10 @@ fun MedicationSection(medications: List<Medication>) {
                     MedicationItem(medication = medication)
                     if (medication != medications.last()) {
                         HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 60.dp)
+                                .padding(vertical = 8.dp),
                             thickness = 1.dp,
                             color = Color(0xFFE8E8E8)
                         )
@@ -437,6 +494,20 @@ fun MedicationSection(medications: List<Medication>) {
                 }
             }
         }
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            thickness = 0.7.dp,
+            color = Color(0xFF918C84)
+        )
+
+        Text(
+            text = "✮⋆˙",
+            fontSize = 18.sp,
+            modifier = Modifier.align(Alignment.Start)
+        )
+
         Spacer(modifier = Modifier.height(40.dp))
     }
 }
@@ -447,13 +518,13 @@ fun MedicationItem(medication: Medication) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Text(
                 text = medication.name,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .clickable { /* navigate to edit medication */ }
@@ -499,7 +570,7 @@ fun NavigationBar() {
         // add/calendar
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size(62.dp)
                 .background(
                     color = Color(0xFFF5F0ED), // circle color
                     shape = CircleShape
@@ -518,7 +589,7 @@ fun NavigationBar() {
                     modifier = Modifier.size(24.dp),
                     tint = Color.Unspecified
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = "add",
                     fontSize = 12.sp,
@@ -551,7 +622,7 @@ fun NavigationButton(iconRes: Int, contentDescription: String?, modifier: Modifi
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(45.dp)
+                .size(40.dp)
                 .background(
                     color = Color(0xFFD7D4CF),
                     shape = CircleShape
@@ -562,7 +633,7 @@ fun NavigationButton(iconRes: Int, contentDescription: String?, modifier: Modifi
                 painter = painterResource(iconRes),
                 contentDescription = contentDescription,
                 modifier = Modifier
-                    .size(24.dp),
+                    .size(20.dp),
                 tint = Color.Unspecified
             )
         }
