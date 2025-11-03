@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
+import com.example.pillpalmobile.screens.LoginScreen
 import com.example.pillpalmobile.screens.WelcomeScreen
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
 import java.time.LocalDate
@@ -58,6 +59,11 @@ class MainActivity : ComponentActivity() {
 //                        onNavigateToLogin = { /* need to do login screen */ },
 //                        onNavigateToSignUp = { /* need to do signup screen */ }
 //                    )
+                    LoginScreen(
+                        onNavigateToSignUp = { /* */ },
+                        onNavigateToHome = { /* */ },
+                        onForgotPassword = { /* */ }
+                    )
                 }
             }
         }
@@ -504,7 +510,7 @@ fun MedicationSection(medications: List<Medication>) {
 
         Text(
             text = "✮⋆˙",
-            fontSize = 18.sp,
+            fontSize = 20.sp,
             modifier = Modifier.align(Alignment.Start)
         )
 
