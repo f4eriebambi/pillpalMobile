@@ -2,6 +2,7 @@ package com.example.pillpalmobile.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -109,7 +110,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("Email") },
+                placeholder = { Text("Email", color = Color(0xFF828282)) },
                 modifier = Modifier
                     .fillMaxWidth(),
                 singleLine = true,
@@ -134,7 +135,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // enter password
+            // password section
             Text(
                 text = "Password",
                 fontSize = 18.sp,
@@ -147,7 +148,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = { Text("Password") },
+                placeholder = { Text("Password", color = Color(0xFF828282)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -162,7 +163,7 @@ fun LoginScreen(
                         )
                     }
                 },
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.Black,
                     unfocusedBorderColor = Color.Gray
@@ -181,6 +182,79 @@ fun LoginScreen(
                     .padding(top = 8.dp)
                     .clickable { onForgotPassword() }
             )
+            Spacer(modifier = Modifier.height(76.dp))
+
+            // sign in button
+//            Button(
+//                onClick = onNavigateToHome,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(42.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = Color(0xFFF1F5EE)
+//                ),
+//                shape = RoundedCornerShape(8.dp)
+//            ) {
+//                Text(
+//                    text = "Sign in ✮⋆˙",
+//                    fontSize = 24.sp,
+//                    color = Color.Black,
+//                    fontWeight = FontWeight.Medium
+//                )
+//            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .border(
+                        width = 5.dp,
+                        color = Color(0xFFAEB6A7),
+//                        shape = RoundedCornerShape(8.dp)
+                    )
+            ) {
+                Button(
+                    onClick = onNavigateToHome,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF1F5EE)
+                    ),
+//                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Sign in ✮⋆˙",
+                            fontSize = 24.sp,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+
+                Row(
+                modifier = Modifier.padding(bottom = 16.dp).background(Color.White),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Don't have an account? ",
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "Sign up",
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { onNavigateToSignUp() }
+                )
+            }
         }
     }
 }
