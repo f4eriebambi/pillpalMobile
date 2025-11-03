@@ -39,6 +39,7 @@ import com.example.pillpalmobile.model.User
 import com.example.pillpalmobile.screens.LoginScreen
 import com.example.pillpalmobile.screens.WelcomeScreen
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
@@ -54,19 +55,76 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White
                 ) {
-                    HomeScreen()
+                    MainApp()
+//                    HomeScreen()
 //                    WelcomeScreen(
 //                        onNavigateToLogin = { /* need to do login screen */ },
 //                        onNavigateToSignUp = { /* need to do signup screen */ }
 //                    )
-                    LoginScreen(
-                        onNavigateToSignUp = { /* */ },
-                        onNavigateToHome = { /* */ },
-                        onForgotPassword = { /* */ }
-                    )
+//                    LoginScreen(
+//                        onNavigateToSignUp = { /* */ },
+//                        onNavigateToHome = { /* */ },
+//                        onForgotPassword = { /* */ }
+//                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MainApp() {
+    var showSplash by remember { mutableStateOf(true) }
+
+    if (showSplash) {
+        SplashScreen {
+            showSplash = false
+        }
+    } else {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.White
+        ) {
+            WelcomeScreen(
+                onNavigateToLogin = { /* need to do login screen */ },
+                onNavigateToSignUp = { /* need to do signup screen */ }
+            )
+        }
+    }
+}
+
+@Composable
+fun SplashScreen(onLoadingComplete: () -> Unit) {
+
+    LaunchedEffect(Unit) {
+        delay(3000)
+        onLoadingComplete()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.deco_stars),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(Color.Gray),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(380.dp)
+                .offset(x = 40.dp, y = 54.dp)
+        )
+
+        Image(
+            painter = painterResource(R.drawable.pillpal_logo),
+            contentDescription = "PillPal Logo",
+            modifier = Modifier
+                .size(250.dp)
+                .align(Alignment.Center)
+                .offset(y = (-50).dp),
+            contentScale = ContentScale.Fit
+        )
     }
 }
 
