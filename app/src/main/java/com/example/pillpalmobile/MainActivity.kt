@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -74,7 +75,7 @@ fun MainApp() {
 fun SplashScreen(onLoadingComplete: () -> Unit) {
 
     LaunchedEffect(Unit) {
-        delay(2000)
+        delay(3000)
         onLoadingComplete()
     }
 
@@ -85,11 +86,12 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
     ) {
         Image(
             painter = painterResource(R.drawable.deco_stars),
-            contentDescription = "Decorative Stars",
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(Color.Gray),
             modifier = Modifier
-                .size(400.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 50.dp, y = (-20).dp)
+                .size(380.dp)
+                .offset(x = 40.dp, y = 54.dp)
         )
 
         Image(
@@ -100,14 +102,6 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
                 .align(Alignment.Center)
                 .offset(y = (-50).dp),
             contentScale = ContentScale.Fit
-        )
-
-                    CircularProgressIndicator(
-            color = Color(0xFF638097),
-            modifier = Modifier
-                .size(40.dp)
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
         )
     }
 }
