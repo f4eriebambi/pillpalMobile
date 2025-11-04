@@ -85,9 +85,14 @@ fun MainApp() {
             modifier = Modifier.fillMaxSize(),
             color = Color.White
         ) {
-            WelcomeScreen(
-                onNavigateToLogin = { /* need to do login screen */ },
-                onNavigateToSignUp = { /* need to do signup screen */ }
+//            LoginScreen(
+//                onNavigateToSignUp = { /* */ },
+//                onNavigateToHome = { /* */ },
+//                onForgotPassword = { /* */ }
+//            )
+            CreateAccountScreen(
+                onNavigateToLogin = { /* */ },
+                onAccountCreated = { /* */ }
             )
         }
     }
