@@ -1,5 +1,6 @@
 package com.example.pillpalmobile
 
+import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +34,10 @@ import java.util.*
 
 // https://developer.android.com/develop/ui/views/components/pickers
 // https://www.geeksforgeeks.org/kotlin/datepicker-in-kotlin/
+// https://developer.android.com/develop/ui/views/components/dialogs
+// https://www.slingacademy.com/article/using-regex-to-validate-email-addresses-in-kotlin/
+// https://www.baeldung.com/kotlin/password-validation
+// https://www.youtube.com/watch?v=v8tBXEx08Ns
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,6 +58,28 @@ fun CreateAccountScreen(
     // birthday date picker state
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
+
+    var showSuccessDialog by remember { mutableStateOf(false) }
+
+    // form fields validation
+    val nameRegex = Regex("^[A-Z][a-zA-Z'\\-]*$")
+    val isNameValid = nameRegex.matches(name)
+    val emailRegex = Patterns.EMAIL_ADDRESS
+    val isEmailValid = emailRegex.matcher(email).matches()
+    val passwordRegex = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@\$!%*?&])[A-Za-z\\d@\$!%*?&]{8,}$")
+    val isPasswordValid = passwordRegex.matches(password)
+    fun calculateAge(birthday: String): Int {
+        val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val birthDate = format.parse(birthday)
+        val today = Calendar.getInstance()
+        val dob = Calendar.getInstance().apply { time = birthDate }
+        var age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR)
+        if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) age--
+        return age
+    }
+    val isOldEnough = birthday.isNotBlank() && calculateAge(birthday) >= 17
+
+
 
     Box(
         modifier = Modifier
@@ -185,6 +212,7 @@ fun CreateAccountScreen(
                         OutlinedTextField(
                             value = name,
                             onValueChange = { name = it },
+                            isError = name.isNotBlank() && !isNameValid,
                             placeholder = { Text("Name", color = Color(0xFF828282), fontSize = 14.sp) },
                             modifier = Modifier
                                 .background(Color.White)
@@ -197,6 +225,13 @@ fun CreateAccountScreen(
                             ),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                         )
+                        if (name.isNotBlank() && !isNameValid) {
+                            Text(
+                                text = "Name must start with a capital and contain only letters, ' or -",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -241,6 +276,7 @@ fun CreateAccountScreen(
                         OutlinedTextField(
                             value = birthday,
                             onValueChange = { },
+                            isError = birthday.isNotBlank() && !isOldEnough,
                             readOnly = true,
                             placeholder = {
                                 Text(
@@ -270,6 +306,14 @@ fun CreateAccountScreen(
                                 disabledTextColor = Color.Black
                             )
                         )
+                        if (birthday.isNotBlank() && !isOldEnough) {
+                            Text(
+                                text = "You must be at least 17 years old to sign up",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                            )
+                        }
 
                         // date picker modal
                         if (showDatePicker) {
@@ -314,6 +358,7 @@ fun CreateAccountScreen(
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
+                            isError = email.isNotBlank() && !isEmailValid,
                             placeholder = { Text("Email", color = Color(0xFF828282), fontSize = 14.sp) },
                             modifier = Modifier
                                 .background(Color.White)
@@ -326,6 +371,14 @@ fun CreateAccountScreen(
                             ),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                         )
+                        if (email.isNotBlank() && !isEmailValid) {
+                            Text(
+                                text = "Please enter a valid email address",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -343,6 +396,7 @@ fun CreateAccountScreen(
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
+                            isError = password.isNotBlank() && !isPasswordValid,
                             placeholder = { Text("Password", color = Color(0xFF828282), fontSize = 14.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
@@ -365,6 +419,14 @@ fun CreateAccountScreen(
                             ),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                         )
+                        if (password.isNotBlank() && !isPasswordValid) {
+                            Text(
+                                text = "Password must be 8+ characters with uppercase, lowercase, number, and symbol",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -440,15 +502,17 @@ fun CreateAccountScreen(
                     .border(width = 5.dp, color = Color(0xFFF1F5EE))
             ) {
                 Button(
-                    onClick = { onAccountCreated(email) },
-                    enabled = name.isNotBlank() && birthday.isNotBlank() && email.isNotBlank() &&
-                            password.isNotBlank() && confirmPassword == password,
+                    onClick = {
+                        showSuccessDialog = true
+                        onAccountCreated(email)
+                    },
+                    enabled = isNameValid && isEmailValid && isPasswordValid && isOldEnough &&
+                            confirmPassword == password,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFAEB6A7)//,
-                        // contentColor = Color.Black
+                        containerColor = Color(0xFFAEB6A7)
                     ),
                     contentPadding = PaddingValues(0.dp),
                     shape = RectangleShape
@@ -466,6 +530,57 @@ fun CreateAccountScreen(
                         )
                     }
                 }
+            }
+
+            if (showSuccessDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSuccessDialog = false },
+                    confirmButton = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            TextButton(onClick = { showSuccessDialog = false }) {
+                                Text(
+                                    text = "OK",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 16.sp
+                                )
+                            }
+                        }
+                    },
+                    title = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp)
+                        )
+                        Text(
+                            text = " • *✰ Account Created!",
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    },
+                    text = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp)
+                        ) {
+                            Text(
+                                text = "Verification email sent to\n$email",
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                )
             }
 
             Row(
