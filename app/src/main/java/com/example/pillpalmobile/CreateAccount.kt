@@ -8,6 +8,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,9 +19,13 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 // https://developer.android.com/develop/ui/views/components/pickers
@@ -37,6 +43,13 @@ fun CreateAccountScreen(
     var nickname by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    // birthday date picker state
+    val datePickerState = rememberDatePickerState()
+    var showDatePicker by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -179,19 +192,64 @@ fun CreateAccountScreen(
 
                 OutlinedTextField(
                     value = birthday,
-                    onValueChange = { birthday = it },
-                    placeholder = { Text("DD/MM/YYYY", color = Color(0xFF828282), fontSize = 14.sp) },
+                    onValueChange = { },
+                    readOnly = true,
+                    placeholder = {
+                        Text(
+                            "DD/MM/YYYY",
+                            color = Color(0xFF828282),
+                            fontSize = 14.sp
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = "Select date",
+                                tint = Color.Black
+                            )
+                        }
+                    },
                     modifier = Modifier
-                        .background(Color.White)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
                     singleLine = true,
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Black,
-                        unfocusedBorderColor = Color.Gray
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        unfocusedBorderColor = Color.Gray,
+                        disabledBorderColor = Color.Gray,
+                        disabledTextColor = Color.Black
+                    )
                 )
+
+                // date picker modal
+                if (showDatePicker) {
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    datePickerState.selectedDateMillis?.let { millis ->
+                                        val dateFormat =
+                                            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                        birthday = dateFormat.format(Date(millis))
+                                    }
+                                    showDatePicker = false
+                                }
+                            ) {
+                                Text("OK")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -220,9 +278,99 @@ fun CreateAccountScreen(
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
-            }
 
-            Spacer(modifier = Modifier.height(100.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // enter password
+                Text(
+                    text = "Password",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .background(Color.White)
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = { Text("Password", color = Color(0xFF828282), fontSize = 14.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                painter = painterResource(
+                                    if (passwordVisible) R.drawable.password_show else R.drawable.password_hide
+                                ),
+                                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Gray
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // enter password again
+                Text(
+                    text = "Confirm Password",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .background(Color.White)
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    placeholder = { Text("Password", color = Color(0xFF828282), fontSize = 14.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                painter = painterResource(
+                                    if (confirmPasswordVisible) R.drawable.password_show else R.drawable.password_hide
+                                ),
+                                contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Gray
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    isError = confirmPassword.isNotEmpty() && password != confirmPassword
+                )
+
+                // error message if not a match
+                if (confirmPassword.isNotEmpty() && password != confirmPassword) {
+                    Text(
+                        text = "Passwords do not match",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, top = 4.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
