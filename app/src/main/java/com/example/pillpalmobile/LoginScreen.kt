@@ -110,7 +110,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("Email", color = Color(0xFF828282)) },
+                placeholder = { Text("Email", color = Color(0xFF828282), fontSize = 14.sp) },
                 modifier = Modifier
                     .fillMaxWidth(),
                 singleLine = true,
@@ -148,7 +148,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = { Text("Password", color = Color(0xFF828282)) },
+                placeholder = { Text("Password", color = Color(0xFF828282), fontSize = 14.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
