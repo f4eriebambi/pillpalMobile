@@ -1,4 +1,4 @@
-package com.example.pillpalmobile.screens
+package com.example.pillpalmobile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pillpalmobile.R
 
 
 // https://medium.com/@emmanuelmuturia/how-to-mask-your-password-in-android-jetpack-compose-3a0deee6c15b
@@ -110,7 +109,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("Email", color = Color(0xFF828282)) },
+                placeholder = { Text("Email", color = Color(0xFF828282), fontSize = 14.sp) },
                 modifier = Modifier
                     .fillMaxWidth(),
                 singleLine = true,
@@ -148,7 +147,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = { Text("Password", color = Color(0xFF828282)) },
+                placeholder = { Text("Password", color = Color(0xFF828282), fontSize = 14.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -238,7 +237,7 @@ fun LoginScreen(
                 }
             }
 
-                Row(
+            Row(
                 modifier = Modifier.padding(bottom = 16.dp).background(Color.White),
                 horizontalArrangement = Arrangement.Center
             ) {

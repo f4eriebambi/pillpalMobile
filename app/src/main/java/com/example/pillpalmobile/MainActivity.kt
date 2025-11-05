@@ -36,8 +36,6 @@ import androidx.compose.ui.unit.sp
 import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
-import com.example.pillpalmobile.screens.LoginScreen
-import com.example.pillpalmobile.screens.WelcomeScreen
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -85,9 +83,14 @@ fun MainApp() {
             modifier = Modifier.fillMaxSize(),
             color = Color.White
         ) {
-            WelcomeScreen(
-                onNavigateToLogin = { /* need to do login screen */ },
-                onNavigateToSignUp = { /* need to do signup screen */ }
+//            LoginScreen(
+//                onNavigateToSignUp = { /* */ },
+//                onNavigateToHome = { /* */ },
+//                onForgotPassword = { /* */ }
+//            )
+            CreateAccountScreen(
+                onNavigateToLogin = { /* */ },
+                onAccountCreated = { /* */ }
             )
         }
     }
