@@ -1,4 +1,4 @@
-package com.example.pillpalmobile.screens
+package com.example.pillpalmobile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pillpalmobile.R
 
 
 // https://medium.com/@emmanuelmuturia/how-to-mask-your-password-in-android-jetpack-compose-3a0deee6c15b
@@ -238,7 +237,7 @@ fun LoginScreen(
                 }
             }
 
-                Row(
+            Row(
                 modifier = Modifier.padding(bottom = 16.dp).background(Color.White),
                 horizontalArrangement = Arrangement.Center
             ) {
