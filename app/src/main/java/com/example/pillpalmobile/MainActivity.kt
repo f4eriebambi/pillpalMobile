@@ -36,12 +36,18 @@ import androidx.compose.ui.unit.sp
 import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
+import com.example.pillpalmobile.screens.WelcomeScreen
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Locale
+
+
+// https://developer.android.com/develop/ui/views/text-and-emoji/fonts-in-xml
+// FONTS USED FROM : https://fonts.google.com/ (montserrat, inter, pixelify sans) and https://developer.apple.com/fonts//https://github.com/ravijoon/SF-Pro-Expanded-Font/blob/main/SF-Pro.ttf (sf pro)
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,10 +98,14 @@ fun MainApp() {
 //                onNavigateToLogin = { /* */ },
 //                onAccountCreated = { /* */ }
 //            )
-            SplashScreen (
-                onLoadingComplete = {
-                    showSplash = false
-                }
+//            SplashScreen (
+//                onLoadingComplete = {
+//                    showSplash = false
+//                }
+//            )
+            WelcomeScreen(
+                onNavigateToLogin = { },
+                onNavigateToSignUp = { },
             )
         }
     }
