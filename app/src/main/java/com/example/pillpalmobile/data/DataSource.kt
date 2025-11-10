@@ -13,7 +13,9 @@ object DataSource {
         dateJoined = "29/10/2025", // this will be from database input but rn mock
         avatarRes = R.drawable.pfp
     )
-    val medications = listOf(
+
+    // CHANGE: Make this a MutableList instead of List
+    val medications = mutableListOf(
         Medication(1, "medication 1"),
         Medication(2, "medication 2"),
         Medication(3, "medication 3"),

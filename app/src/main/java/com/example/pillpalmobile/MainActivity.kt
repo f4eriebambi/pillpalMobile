@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,15 +31,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
 import kotlinx.coroutines.delay
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.temporal.WeekFields
-import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,24 +58,536 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp() {
     var showSplash by remember { mutableStateOf(true) }
+    val navController = rememberNavController()
 
     if (showSplash) {
         SplashScreen {
             showSplash = false
         }
     } else {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = Color.White
+        PillPalMobileTheme {
+            NavHost(
+                navController = navController,
+                startDestination = "home"
+            ) {
+                composable("home") {
+                    HomeScreen(navController = navController)
+                }
+                composable("add_medication") {
+                    AddMedicationScreen(navController = navController)
+                }
+            }
+        }
+    }
+}
+
+// FIXED: Remove default parameter to avoid overload ambiguity
+@Composable
+fun AddMedicationScreen(navController: NavHostController) {
+    var currentStep by remember { mutableStateOf(1) } // 1: Basic info, 2: Time & Repeat, 3: Review
+
+    var medicationName by remember { mutableStateOf("") }
+    var dosage by remember { mutableStateOf("") }
+    var selectedTime by remember { mutableStateOf("08:00") }
+    var repeatOption by remember { mutableStateOf("Daily") }
+    var selectedDays by remember { mutableStateOf<List<String>>(emptyList()) }
+    var startDate by remember { mutableStateOf(getCurrentDate()) }
+    var endDate by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            HomeScreen()
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickable {
+                        if (currentStep > 1) {
+                            currentStep--
+                        } else {
+                            navController.popBackStack()
+                        }
+                    },
+                tint = Color.Black
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = when (currentStep) {
+                    1 -> "Add Medication"
+                    2 -> "Set Reminder"
+                    3 -> "Review"
+                    else -> "Add Medication"
+                },
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+        }
+
+        when (currentStep) {
+            1 -> BasicInfoStep(
+                medicationName = medicationName,
+                dosage = dosage,
+                onMedicationNameChange = { medicationName = it },
+                onDosageChange = { dosage = it },
+                onContinue = {
+                    if (medicationName.isNotEmpty() && dosage.isNotEmpty()) {
+                        currentStep = 2
+                    }
+                }
+            )
+            2 -> TimeAndRepeatStep(
+                selectedTime = selectedTime,
+                repeatOption = repeatOption,
+                selectedDays = selectedDays,
+                startDate = startDate,
+                endDate = endDate,
+                onTimeChange = { selectedTime = it },
+                onRepeatOptionChange = { repeatOption = it },
+                onDaysChange = { selectedDays = it },
+                onStartDateChange = { startDate = it },
+                onEndDateChange = { endDate = it },
+                onContinue = { currentStep = 3 }
+            )
+            3 -> ReviewStep(
+                medicationName = medicationName,
+                dosage = dosage,
+                selectedTime = selectedTime,
+                repeatOption = repeatOption,
+                selectedDays = selectedDays,
+                startDate = startDate,
+                endDate = endDate,
+                notes = notes,
+                onNotesChange = { notes = it },
+                onSave = {
+                    saveMedication(
+                        medicationName = medicationName,
+                        dosage = dosage,
+                        selectedTime = selectedTime,
+                        repeatOption = repeatOption,
+                        selectedDays = selectedDays,
+                        startDate = startDate,
+                        endDate = endDate,
+                        notes = notes,
+                        navController = navController
+                    )
+                }
+            )
         }
     }
 }
 
 @Composable
-fun SplashScreen(onLoadingComplete: () -> Unit) {
+fun BasicInfoStep(
+    medicationName: String,
+    dosage: String,
+    onMedicationNameChange: (String) -> Unit,
+    onDosageChange: (String) -> Unit,
+    onContinue: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp)
+    ) {
+        // Medication Name
+        Text(
+            text = "Medication Name",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        OutlinedTextField(
+            value = medicationName,
+            onValueChange = onMedicationNameChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
+            placeholder = { Text("Enter medication name") },
+            singleLine = true
+        )
 
+        // Dosage
+        Text(
+            text = "Dosage",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        OutlinedTextField(
+            value = dosage,
+            onValueChange = onDosageChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 40.dp),
+            placeholder = { Text("e.g., 10mg, 1 tablet") },
+            singleLine = true
+        )
+
+        // Continue Button
+        Button(
+            onClick = onContinue,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            enabled = medicationName.isNotEmpty() && dosage.isNotEmpty()
+        ) {
+            Text(
+                text = "Continue",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun TimeAndRepeatStep(
+    selectedTime: String,
+    repeatOption: String,
+    selectedDays: List<String>,
+    startDate: String,
+    endDate: String,
+    onTimeChange: (String) -> Unit,
+    onRepeatOptionChange: (String) -> Unit,
+    onDaysChange: (List<String>) -> Unit,
+    onStartDateChange: (String) -> Unit,
+    onEndDateChange: (String) -> Unit,
+    onContinue: () -> Unit
+) {
+    val timeOptions = listOf("08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00")
+    val repeatOptions = listOf("Daily", "Weekly", "Custom", "No Repeat")
+    val daysOfWeek = listOf("M", "T", "W", "T", "F", "S", "S")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp)
+    ) {
+        // Set Reminder Time
+        Text(
+            text = "Set Reminder Time",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Time Selection
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            timeOptions.forEach { time ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onTimeChange(time) }
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = time == selectedTime,
+                        onClick = { onTimeChange(time) }
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = time,
+                        fontSize = 16.sp,
+                        fontWeight = if (time == selectedTime) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+        }
+
+        // Repeat Section
+        Text(
+            text = "Repeat",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Repeat Options
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+        ) {
+            repeatOptions.forEach { option ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onRepeatOptionChange(option) }
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = option == repeatOption,
+                        onClick = { onRepeatOptionChange(option) }
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = option,
+                        fontSize = 16.sp,
+                        fontWeight = if (option == repeatOption) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+        }
+
+        // Conditional Fields based on Repeat Option
+        when (repeatOption) {
+            "Weekly" -> {
+                Text(
+                    text = "Which Day",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    daysOfWeek.forEach { day ->
+                        val isSelected = selectedDays.contains(day)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    color = if (isSelected) Color(0xFF638097) else Color.Transparent,
+                                    shape = CircleShape
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) Color(0xFF638097) else Color.Gray,
+                                    shape = CircleShape
+                                )
+                                .clickable {
+                                    val newDays = if (isSelected) {
+                                        selectedDays - day
+                                    } else {
+                                        selectedDays + day
+                                    }
+                                    onDaysChange(newDays)
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = day,
+                                color = if (isSelected) Color.White else Color.Black,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+            "Custom" -> {
+                // Start Date
+                Text(
+                    text = "Start Date",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = startDate,
+                    onValueChange = onStartDateChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    placeholder = { Text("Select start date") },
+                    singleLine = true
+                )
+
+                // End Date
+                Text(
+                    text = "End Date",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = endDate,
+                    onValueChange = onEndDateChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    placeholder = { Text("Select end date") },
+                    singleLine = true
+                )
+            }
+        }
+
+        // Continue Button
+        Button(
+            onClick = onContinue,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                text = "Continue",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun ReviewStep(
+    medicationName: String,
+    dosage: String,
+    selectedTime: String,
+    repeatOption: String,
+    selectedDays: List<String>,
+    startDate: String,
+    endDate: String,
+    notes: String,
+    onNotesChange: (String) -> Unit,
+    onSave: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp)
+    ) {
+        // Review Summary
+        Text(
+            text = "Review Medication",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        // Medication Details
+        ReviewItem("Name", medicationName)
+        ReviewItem("Dosage", dosage)
+        ReviewItem("Time", selectedTime)
+        ReviewItem("Repeat", repeatOption)
+
+        if (repeatOption == "Weekly" && selectedDays.isNotEmpty()) {
+            ReviewItem("Days", selectedDays.joinToString(", "))
+        }
+        if (repeatOption == "Custom") {
+            ReviewItem("Start Date", startDate)
+            if (endDate.isNotEmpty()) {
+                ReviewItem("End Date", endDate)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Notes
+        Text(
+            text = "Notes (Optional)",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        OutlinedTextField(
+            value = notes,
+            onValueChange = onNotesChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .padding(bottom = 32.dp),
+            placeholder = { Text("e.g., \"Take with water\", \"Don't take with dairy\", etc.") },
+            maxLines = 5
+        )
+
+        // Save Button
+        Button(
+            onClick = onSave,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                text = "Save Medication",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun ReviewItem(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.Gray
+        )
+        Text(
+            text = value,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Normal
+        )
+    }
+}
+
+private fun saveMedication(
+    medicationName: String,
+    dosage: String,
+    selectedTime: String,
+    repeatOption: String,
+    selectedDays: List<String>,
+    startDate: String,
+    endDate: String,
+    notes: String,
+    navController: NavHostController
+) {
+    val newId = DataSource.medications.size + 1
+
+    val newMedication = Medication(
+        id = newId,
+        name = medicationName,
+        dosage = dosage,
+        frequency = "$selectedTime - $repeatOption", // Combine time and repeat info
+        notes = notes
+    )
+
+    DataSource.medications.add(newMedication)
+
+    // Navigate back to home
+    navController.popBackStack()
+}
+
+private fun getCurrentDate(): String {
+    val formatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+    return formatter.format(Date())
+}
+
+@Composable
+fun SplashScreen(onLoadingComplete: () -> Unit) {
     LaunchedEffect(Unit) {
         delay(2000)
         onLoadingComplete()
@@ -102,7 +617,7 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
             contentScale = ContentScale.Fit
         )
 
-                    CircularProgressIndicator(
+        CircularProgressIndicator(
             color = Color(0xFF638097),
             modifier = Modifier
                 .size(40.dp)
@@ -112,8 +627,9 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
     }
 }
 
+// FIXED: Remove default parameter
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavHostController) {
     val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -125,17 +641,10 @@ fun HomeScreen() {
                 .padding(bottom = 8.dp)
         ) {
             GreetingSection(user = DataSource.user)
-
-//            Spacer(modifier = Modifier.height(16.dp))
-
             DateSection()
-
             Spacer(modifier = Modifier.height(16.dp))
-
             ProfileCard(user = DataSource.user)
-
             Spacer(modifier = Modifier.height(24.dp))
-
             MedicationSection(medications = DataSource.medications)
         }
 
@@ -143,10 +652,9 @@ fun HomeScreen() {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-//                .background(Color.White)
                 .padding(bottom = 4.dp)
         ) {
-            NavigationBar()
+            NavigationBar(navController = navController)
         }
     }
 }
@@ -176,7 +684,6 @@ fun GreetingSection(user: User) {
             ) {
                 Box(
                     modifier = Modifier
-//                        .fillMaxWidth(fraction = 0.3f)
                         .matchParentSize()
                         .offset(y = 2.dp)
                         .graphicsLayer {
@@ -191,7 +698,6 @@ fun GreetingSection(user: User) {
                             color = Color.Black,
                             shape = RoundedCornerShape(percent = 60)
                         )
-//                        .padding(horizontal = 9.dp, vertical = 7.dp)
                 )
                 Text(
                     text = "[ ${user.name} ]",
@@ -219,29 +725,28 @@ fun GreetingSection(user: User) {
     }
 }
 
+// FIXED: Use old Java Date API instead of java.time for Android < 26
 @Composable
 fun DateSection() {
-    // get current date
-    val currentDate = LocalDate.now()
-    val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
-    val formattedDate = currentDate.format(formatter)
+    val currentDate = Calendar.getInstance().time
+    val formatter = SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
+    val formattedDate = formatter.format(currentDate)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "$formattedDate",
+            text = formattedDate,
             fontSize = 24.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .clickable { /* navigate to calendar */ }
         )
-//        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "»",
             fontSize = 28.sp,
-            fontWeight = FontWeight.Bold, // optional
+            fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .clickable { /* navigate to calendar */ }
                 .padding(start = 8.dp, bottom = 4.dp),
@@ -265,7 +770,6 @@ fun ProfileCard(user: User) {
         Column(
             modifier = Modifier.padding(18.dp)
         ) {
-            // star border
             Text(
                 text = "✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
                 fontSize = 10.sp,
@@ -301,7 +805,6 @@ fun ProfileCard(user: User) {
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // user details
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "PillPal ID",
@@ -321,7 +824,6 @@ fun ProfileCard(user: User) {
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        // name
                         Column {
                             Row {
                                 Text("Name: ", fontSize = 13.sp, color = Color.Gray)
@@ -340,7 +842,6 @@ fun ProfileCard(user: User) {
 
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        // nickname
                         Column {
                             Row {
                                 Text("Nickname: ", fontSize = 13.sp, color = Color.Gray)
@@ -359,7 +860,6 @@ fun ProfileCard(user: User) {
 
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        // birthday
                         Column {
                             Row {
                                 Text("Birthday: ", fontSize = 13.sp, color = Color.Gray)
@@ -381,7 +881,6 @@ fun ProfileCard(user: User) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // date joined
             Text(
                 text = user.dateJoined,
                 fontSize = 18.sp,
@@ -407,7 +906,6 @@ fun ProfileCard(user: User) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // star border
             Text(
                 text = " ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
                 fontSize = 16.sp,
@@ -419,11 +917,11 @@ fun ProfileCard(user: User) {
     }
 }
 
+// FIXED: Use Calendar instead of java.time for week calculation
 @Composable
 fun MedicationSection(medications: List<Medication>) {
-    val currentDate = LocalDate.now()
-    val weekFields = WeekFields.of(Locale.getDefault())
-    val weekNumber = currentDate.get(weekFields.weekOfWeekBasedYear())
+    val calendar = Calendar.getInstance()
+    val weekNumber = calendar.get(Calendar.WEEK_OF_YEAR)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -438,16 +936,13 @@ fun MedicationSection(medications: List<Medication>) {
         Text(
             text = "Week $weekNumber",
             fontSize = 14.sp,
-//            color = Color.Gray
             color = Color.Black
         )
     }
 
-    // divider
     HorizontalDivider(
         modifier = Modifier.padding(vertical = 8.dp),
         thickness = 1.dp,
-//        color = Color(0xFFE8E8E8)
         color = Color.Black
     )
 
@@ -493,7 +988,6 @@ fun MedicationSection(medications: List<Medication>) {
     }
 }
 
-
 @Composable
 fun MedicationItem(medication: Medication) {
     Row(
@@ -523,8 +1017,9 @@ fun MedicationItem(medication: Medication) {
     }
 }
 
+// FIXED: Remove default parameter
 @Composable
-fun NavigationBar() {
+fun NavigationBar(navController: NavHostController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -532,31 +1027,28 @@ fun NavigationBar() {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // home
         NavigationButton(
             iconRes = R.drawable.home,
             contentDescription = null,
-            modifier = Modifier
-                .clickable { /* navigate to home */ },
+            modifier = Modifier.clickable { /* navigate to home */ }
         )
 
-        // history
         NavigationButton(
             iconRes = R.drawable.history,
             contentDescription = null,
-            modifier = Modifier
-                .clickable { /* navigate to history */ },
+            modifier = Modifier.clickable { /* navigate to history */ }
         )
 
-        // add/calendar
         Box(
             modifier = Modifier
                 .size(64.dp)
                 .background(
-                    color = Color(0xFFF5F0ED), // circle color
+                    color = Color(0xFFF5F0ED),
                     shape = CircleShape
                 )
-                .clickable { /* navigation to add/calendar */ },
+                .clickable {
+                    navController.navigate("add_medication")
+                },
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -566,7 +1058,7 @@ fun NavigationBar() {
             ) {
                 Icon(
                     painter = painterResource(R.drawable.add_calendar),
-                    contentDescription = null,
+                    contentDescription = "Add Medication",
                     modifier = Modifier.size(24.dp),
                     tint = Color.Unspecified
                 )
@@ -580,20 +1072,16 @@ fun NavigationBar() {
             }
         }
 
-        // notifs
         NavigationButton(
             iconRes = R.drawable.bell,
             contentDescription = null,
-            modifier = Modifier
-                .clickable { /* navigate to notifs */ },
+            modifier = Modifier.clickable { /* navigate to notifs */ }
         )
 
-        // settings
         NavigationButton(
             iconRes = R.drawable.user_settings,
             contentDescription = null,
-            modifier = Modifier
-                .clickable { /* navigate to settings */ },
+            modifier = Modifier.clickable { /* navigate to settings */ }
         )
     }
 }
@@ -613,8 +1101,7 @@ fun NavigationButton(iconRes: Int, contentDescription: String?, modifier: Modifi
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = contentDescription,
-                modifier = Modifier
-                    .size(24.dp),
+                modifier = Modifier.size(24.dp),
                 tint = Color.Unspecified
             )
         }
