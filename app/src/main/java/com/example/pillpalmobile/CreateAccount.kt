@@ -104,14 +104,6 @@ fun CreateAccountScreen(
                 .padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(R.drawable.pillpal_icon),
-                contentDescription = "PillPal Icon",
-                modifier = Modifier
-                    .size(90.dp)
-                    .padding(top = 8.dp)
-                    .align(Alignment.End)
-            )
 
             Spacer(modifier = Modifier.height(20.dp))
 

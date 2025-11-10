@@ -88,9 +88,14 @@ fun MainApp() {
 //                onNavigateToHome = { /* */ },
 //                onForgotPassword = { /* */ }
 //            )
-            CreateAccountScreen(
-                onNavigateToLogin = { /* */ },
-                onAccountCreated = { /* */ }
+//            CreateAccountScreen(
+//                onNavigateToLogin = { /* */ },
+//                onAccountCreated = { /* */ }
+//            )
+            SplashScreen (
+                onLoadingComplete = {
+                    showSplash = false
+                }
             )
         }
     }
@@ -112,7 +117,7 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
         Image(
             painter = painterResource(R.drawable.deco_stars),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(Color.Gray),
+            colorFilter = ColorFilter.tint(Color.LightGray),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .size(380.dp)
@@ -178,22 +183,6 @@ fun HomeScreen() {
         ) {
             NavigationBar()
         }
-        Image(
-            painter = painterResource(R.drawable.deco_starspiral2),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(115.dp)
-                .offset(x = (-25).dp, y = (-618).dp)
-        )
-        Image(
-            painter = painterResource(R.drawable.deco_symbol),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(150.dp)
-                .offset(x = (-3).dp, y = (-380).dp)
-        )
         Image(
             painter = painterResource(R.drawable.pillpal_team),
             contentDescription = null,
@@ -264,13 +253,6 @@ fun GreetingSection(user: User) {
                 )
             }
         }
-        Image(
-            painter = painterResource(R.drawable.pillpal_icon),
-            contentDescription = "PillPal Icon",
-            modifier = Modifier
-                .size(90.dp)
-                .padding(top = 8.dp)
-        )
     }
 }
 
