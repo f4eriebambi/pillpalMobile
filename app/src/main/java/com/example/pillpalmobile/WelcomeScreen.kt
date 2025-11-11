@@ -34,18 +34,6 @@ fun WelcomeScreen(
     ) {
         Spacer(modifier = Modifier.height(150.dp))
 
-//        // text at top
-//        Image(
-//            painter = painterResource(R.drawable.by_pixel_health),
-//            contentDescription = null,
-//            modifier = Modifier
-//                .width(250.dp)
-//                .height(80.dp),
-//            contentScale = ContentScale.FillWidth
-//        )
-
-//        Spacer(modifier = Modifier.height(1.dp))
-
         Image(
             painter = painterResource(R.drawable.pillpal_welcome),
             contentDescription = null,
@@ -55,27 +43,6 @@ fun WelcomeScreen(
         )
 
         Spacer(modifier = Modifier.height(64.dp))
-
-        // heading
-//        Text(
-//            text = "Welcome to PillPal!",
-//            fontSize = 32.sp,
-//            fontWeight = FontWeight.Bold,
-//            textAlign = TextAlign.Center
-//        )
-//
-//        Spacer(modifier = Modifier.height(55.dp))
-//
-//        Text(
-//            text = "Already have an account?",
-//            fontSize = 18.sp,
-//            color = Color.Black,
-//            textAlign = TextAlign.Start,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(start = 16.dp)
-//        )
-
         Spacer(modifier = Modifier.height(72.dp))
 
         // sign in button
@@ -108,27 +75,6 @@ fun WelcomeScreen(
                 )
             }
         }
-
-//        Spacer(modifier = Modifier.height(24.dp))
-//
-//        // divider
-//        Text(
-//            text = "──────────  or  ──────────",
-//            fontSize = 20.sp,
-//            color = Color(0xFFCFCFCF),
-//        )
-
-//        Spacer(modifier = Modifier.height(24.dp))
-//
-//        Text(
-//            text = "New here?",
-//            fontSize = 18.sp,
-//            color = Color.Black,
-//            textAlign = TextAlign.Left,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(start = 16.dp)
-//        )
 
         Spacer(modifier = Modifier.height(24.dp))
 

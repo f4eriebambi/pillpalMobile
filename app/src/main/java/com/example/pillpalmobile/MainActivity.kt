@@ -89,24 +89,24 @@ fun MainApp() {
             modifier = Modifier.fillMaxSize(),
             color = Color.White
         ) {
-//            LoginScreen(
-//                onNavigateToSignUp = { /* */ },
-//                onNavigateToHome = { /* */ },
-//                onForgotPassword = { /* */ }
-//            )
-//            CreateAccountScreen(
-//                onNavigateToLogin = { /* */ },
-//                onAccountCreated = { /* */ }
-//            )
 //            SplashScreen (
 //                onLoadingComplete = {
 //                    showSplash = false
 //                }
 //            )
-            WelcomeScreen(
-                onNavigateToLogin = { },
-                onNavigateToSignUp = { },
+//            WelcomeScreen(
+//                onNavigateToLogin = { },
+//                onNavigateToSignUp = { },
+//            )
+            LoginScreen(
+                onNavigateToSignUp = { /* */ },
+                onNavigateToHome = { /* */ },
+                onForgotPassword = { /* */ }
             )
+//            CreateAccountScreen(
+//                onNavigateToLogin = { /* */ },
+//                onAccountCreated = { /* */ }
+//            )
         }
     }
 }
@@ -115,7 +115,7 @@ fun MainApp() {
 fun SplashScreen(onLoadingComplete: () -> Unit) {
 
     LaunchedEffect(Unit) {
-        delay(3000)
+        delay(2000)
         onLoadingComplete()
     }
 
