@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -94,6 +95,7 @@ fun MainApp() {
 //                    showSplash = false
 //                }
 //            )
+            HomeScreen()
 //            WelcomeScreen(
 //                onNavigateToLogin = { },
 //                onNavigateToSignUp = { },
@@ -103,10 +105,10 @@ fun MainApp() {
 //                onNavigateToHome = { /* */ },
 //                onForgotPassword = { /* */ }
 //            )
-            CreateAccountScreen(
-                onNavigateToLogin = { /* */ },
-                onAccountCreated = { /* */ }
-            )
+//            CreateAccountScreen(
+//                onNavigateToLogin = { /* */ },
+//                onAccountCreated = { /* */ }
+//            )
         }
     }
 }
@@ -151,16 +153,6 @@ fun HomeScreen() {
     val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(R.drawable.deco_stars),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(Color.Gray),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(380.dp)
-                .offset(x = 40.dp, y = 54.dp)
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -168,17 +160,19 @@ fun HomeScreen() {
                 .padding(25.dp)
                 .padding(bottom = 8.dp)
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
             GreetingSection(user = DataSource.user)
 
-//            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             DateSection()
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             ProfileCard(user = DataSource.user)
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             MedicationSection(medications = DataSource.medications)
         }
@@ -189,19 +183,10 @@ fun HomeScreen() {
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
 //                .background(Color.White)
-                .padding(bottom = 4.dp)
+                .padding(bottom = 20.dp)
         ) {
             NavigationBar()
         }
-        Image(
-            painter = painterResource(R.drawable.pillpal_team),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .rotate(-90f)
-                .size(310.dp)
-                .offset(x = (110).dp, y = (-175).dp)
-        )
     }
 }
 
@@ -216,14 +201,8 @@ fun GreetingSection(user: User) {
             Text(
                 text = "Hello, ",
                 fontSize = 32.sp,
+                fontFamily = Montserrat,
                 fontWeight = FontWeight.Normal,
-                style = TextStyle(
-                    shadow = Shadow(
-                        color = Color.DarkGray.copy(alpha = 0.5f),
-                        offset = Offset(5f, 5f),
-                        blurRadius = 2f
-                    )
-                )
             )
             Box(
                 contentAlignment = Alignment.Center
@@ -237,28 +216,22 @@ fun GreetingSection(user: User) {
                             scaleY = 0.5f
                         }
                         .background(
-                            color = Color(0xFFFDED24),
+                            color = Color(0xFFFCE2A9),
                             shape = RoundedCornerShape(percent = 60)
                         )
                         .border(
-                            width = 0.5.dp,
-                            color = Color.Black,
+                            width = 1.dp,
+                            color = Color(0xFFF16F33),
                             shape = RoundedCornerShape(percent = 60)
                         )
 //                        .padding(horizontal = 9.dp, vertical = 7.dp)
                 )
                 Text(
-                    text = "[ ${user.name} ]",
+                    text = user.name,
                     fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontFamily = Montserrat,
+                    fontWeight = FontWeight.Medium,
                     color = Color.Black,
-                    style = TextStyle(
-                        shadow = Shadow(
-                            color = Color.Gray.copy(alpha = 0.5f),
-                            offset = Offset(5f, 5f),
-                            blurRadius = 2f
-                        )
-                    ),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
                 )
             }
@@ -275,20 +248,23 @@ fun DateSection() {
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         Text(
             text = "$formattedDate",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 30.sp,
+            fontFamily = PixelifySans,
+            fontWeight = FontWeight.Normal,
             modifier = Modifier
                 .clickable { /* navigate to calendar */ }
         )
 //        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "»",
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Bold, // optional
+            fontSize = 24.sp,
+            fontFamily = PixelifySans,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .clickable { /* navigate to calendar */ }
                 .padding(start = 8.dp, bottom = 4.dp),
@@ -304,63 +280,42 @@ fun ProfileCard(user: User) {
             .fillMaxWidth()
             .shadow(
                 elevation = 8.dp,
-                spotColor = Color(0x55000000),
-                ambientColor = Color(0x33000000),
-                shape = RoundedCornerShape(10.dp)
+                spotColor = Color.Black,
+                ambientColor = Color.Black,
+                shape = RoundedCornerShape(10.dp),
+                clip = false
             )
-            .border(1.dp, Color.Black, RoundedCornerShape(10.dp)),
+            .border(2.dp, Color(0xFFFDFAE7), RoundedCornerShape(10.dp)),
         shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE9F5FF))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFACBD6F))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            // star border
-            Text(
-                text = "✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(0.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-//                    Image(
-//                        painter = painterResource(user.avatarRes),
-//                        contentDescription = null,
-//                        modifier = Modifier
-//                            .size(100.dp)
-//                            .border(1.5.dp, Color.Black, padding ),
-//                        contentScale = ContentScale.Crop
-//                    )
+                Column(horizontalAlignment = Alignment.CenterHorizontally)
+                {
                     Box(
                         modifier = Modifier
-                            .size(width = 110.dp, height = 109.dp)
-                            .border(2.dp, Color.Black)
+                            .size(width = 102.dp, height = 100.dp)
+                            .border(1.dp, Color.Black)
                             .background(Color.White)
                     ) {
                         Image(
                             painter = painterResource(user.avatarRes),
                             contentDescription = null,
                             modifier = Modifier
-                                .size(width = 84.dp, height = 84.dp)
+                                .size(width = 90.dp, height = 88.dp)
                                 .align(Alignment.Center),
                             contentScale = ContentScale.Fit
                         )
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = ".☆ ˖ִ ࣪⚝₊ ⊹˚",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.offset(x = (-30).dp, y = (-19).dp)
-                    )
+//                    Spacer(modifier = Modifier.height(6.dp))
                 }
 
                 Spacer(modifier = Modifier.width(20.dp))
@@ -372,25 +327,26 @@ fun ProfileCard(user: User) {
                 ) {
                     Text(
                         text = "PillPal ID",
-                        fontSize = 24.sp,
+                        fontSize = 28.sp,
+                        fontFamily = Montserrat,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = Color.White
                     )
                     Text(
-                        text = "----------------------------",
-                        color = Color(0xFF638097),
-                        fontSize = 15.sp,
-                        textAlign = TextAlign.Center
+                        text = "-------------------",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.offset(y = (-16).dp)
                     )
 
-                    Spacer(modifier = Modifier.height(3.dp))
+//                    Spacer(modifier = Modifier.height(3.dp))
 
                     // name
                     ProfileField(label = "Name:     ", value = user.name)
-                    Spacer(modifier = Modifier.height(1.dp))
-
-                    // nickname
-                    ProfileField(label = "Nickname:     ", value = user.nickname ?: "N/A")
                     Spacer(modifier = Modifier.height(1.dp))
 
                     // birthday
@@ -400,48 +356,15 @@ fun ProfileCard(user: User) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // date joined section + stars
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = user.dateJoined,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Right,
-                    modifier = Modifier.fillMaxWidth(),
-                    lineHeight = 13.sp
-                )
-                Text(
-                    text = "----------------------------",
-                    color = Color(0xFF638097),
-                    fontSize = 15.sp,
-                    textAlign = TextAlign.Right,
-                    modifier = Modifier.fillMaxWidth(),
-                    lineHeight = 12.sp
-                )
-
-                // stars + joined
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = " ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮  ✮",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 10.sp
-                    )
-                    Text(
-                        text = "Date of Issue (Joined)",
-                        fontSize = 10.sp,
-                        textAlign = TextAlign.Right,
-                        lineHeight = 10.sp
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "--------------------------------",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontFamily = Montserrat,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -453,28 +376,40 @@ fun ProfileField(label: String, value: String) {
             .fillMaxWidth()
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Text(
                 text = label,
-                fontSize = 12.sp,
-                color = Color.Black,
-                lineHeight = 10.sp
+                fontSize = 16.sp,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Medium,
+                color = Color.White,
+                lineHeight = 10.sp,
+                modifier = Modifier.weight(1f)
             )
             Text(
                 text = value,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.Black,
-                lineHeight = 13.sp
+                fontSize = 16.sp,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Normal,
+                color = Color.White,
+                lineHeight = 13.sp,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f),
             )
         }
         Text(
-            text = ".....................................................",
-            color = Color(0xFF638097),
-            fontSize = 8.sp,
-            lineHeight = 8.sp,
-            modifier = Modifier.fillMaxWidth()
+            text = "...................................",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontFamily = Inter,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 4.sp,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -485,89 +420,78 @@ fun MedicationSection(medications: List<Medication>) {
     val weekFields = WeekFields.of(Locale.getDefault())
     val weekNumber = currentDate.get(weekFields.weekOfWeekBasedYear())
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-//        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "My Medication",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "    Week $weekNumber",
-            fontSize = 15.sp,
-//            color = Color.Gray
-            color = Color.Black
-        )
-    }
-
-    // divider
-    HorizontalDivider(
-        modifier = Modifier.padding(vertical = 8.dp),
-        thickness = 1.dp,
-//        color = Color(0xFFE8E8E8)
-        color = Color.Black
-    )
-
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 390.dp)
-            .background(
-                color = Color(0xFFF9F8F1),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = Color(0xFF918C84),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Card(
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "   My Medication",
+                fontSize = 22.sp,
+                fontFamily = Montserrat,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+            Text(
+                text = " Week $weekNumber",
+                fontSize = 18.sp,
+                fontFamily = Montserrat,
+                fontWeight = FontWeight.Normal,
+                color = Color.Black
+            )
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = 420.dp)
+                .background(
+                    color = Color(0xFFFDFAE7),
+                    shape = RoundedCornerShape(12.dp)
+                )
                 .border(
-                    width = 1.dp,
-                    color = Color.Black,
-                    shape = RoundedCornerShape(8.dp)
-                ),
-            shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+                    width = 2.dp,
+                    color = Color(0xFF595880),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                medications.forEach { medication ->
-                    MedicationItem(medication = medication)
-                    if (medication != medications.last()) {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 60.dp)
-                                .padding(vertical = 8.dp),
-                            thickness = 1.dp,
-                            color = Color(0xFFE8E8E8)
-                        )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 195.dp)
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFF918C84),
+                        shape = RoundedCornerShape(8.dp)
+                    ),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    medications.forEach { medication ->
+                        MedicationItem(medication = medication)
+                        if (medication != medications.last()) {
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    .padding(top = 8.dp),
+                                thickness = 0.5.dp,
+                                color = Color(0xFF918C84)
+                            )
+                        }
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(20.dp))
         }
-        HorizontalDivider(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            thickness = 0.7.dp,
-            color = Color(0xFF918C84)
-        )
-
-        Text(
-            text = "✮⋆˙",
-            fontSize = 20.sp,
-            modifier = Modifier.align(Alignment.Start)
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 
@@ -583,7 +507,9 @@ fun MedicationItem(medication: Medication) {
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Text(
                 text = medication.name,
-                fontSize = 18.sp,
+                fontSize = 22.sp,
+                fontFamily = PixelifySans,
+                fontWeight = FontWeight.Normal,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .clickable { /* navigate to edit medication */ }
@@ -594,8 +520,8 @@ fun MedicationItem(medication: Medication) {
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             modifier = Modifier
-                .size(28.dp)
-                .clickable { /* navigate */ },
+                .size(32.dp)
+                .clickable { /* navigate to edit medication */ },
             tint = Color.Black
         )
     }
@@ -606,62 +532,55 @@ fun NavigationBar() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 50.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // home
-        NavigationButton(
-            iconRes = R.drawable.home,
-            contentDescription = null,
-            modifier = Modifier
-                .clickable { /* navigate to home */ },
-        )
+        // home (enabled/current page)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .background(
+                        color = Color(0xFFCBCBE7),
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = Color(0xFF595880),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.home),
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = Color.Unspecified
+                )
+            }
+        }
 
         // history
         NavigationButton(
             iconRes = R.drawable.history,
-            contentDescription = null,
+            label = "history",
             modifier = Modifier
                 .clickable { /* navigate to history */ },
         )
 
         // add/calendar
-        Box(
+        NavigationButton(
+            iconRes = R.drawable.add_calendar,
+            label = "add",
             modifier = Modifier
-                .size(62.dp)
-                .background(
-                    color = Color(0xFFF5F0ED), // circle color
-                    shape = CircleShape
-                )
                 .clickable { /* navigation to add/calendar */ },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(vertical = 6.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.add_calendar),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = Color.Unspecified
-                )
-                Spacer(modifier = Modifier.height(1.dp))
-                Text(
-                    text = "add",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
-            }
-        }
+        )
 
         // notifs
         NavigationButton(
             iconRes = R.drawable.bell,
-            contentDescription = null,
+            label = "alerts",
             modifier = Modifier
                 .clickable { /* navigate to notifs */ },
         )
@@ -669,7 +588,7 @@ fun NavigationBar() {
         // settings
         NavigationButton(
             iconRes = R.drawable.user_settings,
-            contentDescription = null,
+            label = "settings",
             modifier = Modifier
                 .clickable { /* navigate to settings */ },
         )
@@ -677,24 +596,41 @@ fun NavigationBar() {
 }
 
 @Composable
-fun NavigationButton(iconRes: Int, contentDescription: String?, modifier: Modifier) {
+fun NavigationButton(iconRes: Int, label: String, modifier: Modifier) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(70.dp)
                 .background(
-                    color = Color(0xFFD7D4CF),
+                    color = Color.White,
+                    shape = CircleShape
+                )
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFF7C8081),
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = contentDescription,
-                modifier = Modifier
-                    .size(20.dp),
-                tint = Color.Unspecified
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.clickable { /* navigation will be implemented */ }
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp).padding(top = 4.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = label,
+                    fontSize = 11.sp, // or can change to 15 and then history->log and settings->prefs
+                    fontFamily = Montserrat,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+            }
         }
     }
 }
