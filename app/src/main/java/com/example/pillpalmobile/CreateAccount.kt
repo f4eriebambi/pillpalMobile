@@ -48,7 +48,6 @@ fun CreateAccountScreen(
 ) {
     val scrollState = rememberScrollState()
     var name by remember { mutableStateOf("") }
-    var nickname by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -62,7 +61,7 @@ fun CreateAccountScreen(
     var showSuccessDialog by remember { mutableStateOf(false) }
 
     // form fields validation
-    val nameRegex = Regex("^[A-Z][a-zA-Z'\\-]*$")
+    val nameRegex = Regex("^[a-zA-Z][a-zA-Z'\\-\\s]{0,14}$")
     val isNameValid = nameRegex.matches(name)
     val emailRegex = Patterns.EMAIL_ADDRESS
     val isEmailValid = emailRegex.matcher(email).matches()
@@ -86,15 +85,6 @@ fun CreateAccountScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        Image(
-            painter = painterResource(R.drawable.deco_stars),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(Color.Gray),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(380.dp)
-                .offset(x = 40.dp, y = 54.dp)
-        )
 
         Column(
             modifier = Modifier
@@ -104,69 +94,51 @@ fun CreateAccountScreen(
                 .padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(R.drawable.pillpal_icon),
-                contentDescription = "PillPal Icon",
-                modifier = Modifier
-                    .size(90.dp)
-                    .padding(top = 8.dp)
-                    .align(Alignment.End)
-            )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Image(
                 painter = painterResource(R.drawable.pillpal_team),
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)
-//                    .background(Color.Cyan)
+                    .height(80.dp)
             )
 
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
-                text = "Create Account",
-                fontSize = 40.sp,
-                fontWeight = FontWeight.Bold,
+                text = "Welcome to",
+                fontSize = 38.sp,
+                fontFamily = Montserrat,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
 
-            Text(
-                text = "HI! Let's join PillPal :)",
-                fontSize = 18.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Center
-            )
+            Spacer(modifier = Modifier.height(1.dp))
 
             Text(
-                text = ".☆ ˖ִ ࣪⚝₊ ⊹˚",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 8.dp)
+                text = "PillPal",
+                fontSize = 38.sp,
+                fontFamily = Montserrat,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-//            Card(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(vertical = 8.dp),
-//                shape = RoundedCornerShape(20.dp),
-//                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F8F1)), // soft green
-//                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-//            ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 390.dp)
                     .background(
-                        color = Color(0xFFF1F5EE),
-                        shape = RoundedCornerShape(12.dp)
+                        color = Color(0xFFFFFEF5),
+                        shape = RoundedCornerShape(10.dp)
                     )
                     .border(
                         width = 1.dp,
                         color = Color(0xFF918C84),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
                     .padding(16.dp)
             ) {
@@ -176,9 +148,9 @@ fun CreateAccountScreen(
                         .background(Color.White)
                         .fillMaxWidth()
                         .border(
-                            width = 1.dp,
+                            width = 0.5.dp,
                             color = Color.Black,
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(10.dp)
                         )
                         .padding(top = 24.dp, bottom = 24.dp),
                 ) {
@@ -191,9 +163,10 @@ fun CreateAccountScreen(
                     ) {
                         Text(
                             text = "* means required",
-                            fontSize = 14.sp,
-                            color = Color(0xFFCFCFCF),
-                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = Color(0xFF4A4A4A),
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -202,7 +175,8 @@ fun CreateAccountScreen(
                         // enter name
                         Text(
                             text = "Name *",
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
+                            fontFamily = Montserrat,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -213,21 +187,39 @@ fun CreateAccountScreen(
                             value = name,
                             onValueChange = { name = it },
                             isError = name.isNotBlank() && !isNameValid,
-                            placeholder = { Text("Name", color = Color(0xFF828282), fontSize = 14.sp) },
+                            placeholder = {
+                                Text(
+                                    "Name",
+                                    color = Color(0xFF828282),
+                                    fontSize = 18.sp,
+                                    fontFamily = Montserrat,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            },
                             modifier = Modifier
-                                .background(Color.White)
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.Gray,
+                                    shape = RoundedCornerShape(15.dp)
+                                ),
                             singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(15.dp),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 18.sp,
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.Medium,
+                                color = if (name.isNotEmpty()) Color.Black else Color(0xFF828282)
+                            ),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Black,
+                                focusedBorderColor = Color(0xFFACBD6F),
                                 unfocusedBorderColor = Color.Gray
                             ),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                         )
                         if (name.isNotBlank() && !isNameValid) {
                             Text(
-                                text = "Name must start with a capital and contain only letters, ' or -",
+                                text = "Use 1-15 letters, spaces, ' or -",
                                 color = MaterialTheme.colorScheme.error,
                                 fontSize = 12.sp
                             )
@@ -235,10 +227,11 @@ fun CreateAccountScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // enter nickname
+                        // enter email
                         Text(
-                            text = "Nickname (Optional)",
-                            fontSize = 18.sp,
+                            text = "Email address *",
+                            fontSize = 20.sp,
+                            fontFamily = Montserrat,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -246,27 +239,55 @@ fun CreateAccountScreen(
                         )
 
                         OutlinedTextField(
-                            value = nickname,
-                            onValueChange = { nickname = it },
-                            placeholder = { Text("Nickname", color = Color(0xFF828282), fontSize = 14.sp) },
+                            value = email,
+                            onValueChange = { email = it },
+                            isError = email.isNotBlank() && !isEmailValid,
+                            placeholder = {
+                                Text(
+                                    "Email address",
+                                    color = Color(0xFF828282),
+                                    fontSize = 18.sp,
+                                    fontFamily = Montserrat,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            },
                             modifier = Modifier
-                                .background(Color.White)
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.Gray,
+                                    shape = RoundedCornerShape(15.dp)
+                                ),
                             singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(15.dp),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 18.sp,
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.Medium,
+                                color = if (email.isNotEmpty()) Color.Black else Color(0xFF828282)
+                            ),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Black,
+                                focusedBorderColor = Color(0xFFACBD6F),
                                 unfocusedBorderColor = Color.Gray
                             ),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                         )
+                        if (email.isNotBlank() && !isEmailValid) {
+                            Text(
+                                text = "Please enter a valid email address",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // enter birthday
                         Text(
-                            text = "Birthday *",
-                            fontSize = 18.sp,
+                            text = "Date of birth *",
+                            fontSize = 20.sp,
+                            fontFamily = Montserrat,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -280,9 +301,11 @@ fun CreateAccountScreen(
                             readOnly = true,
                             placeholder = {
                                 Text(
-                                    "DD/MM/YYYY",
+                                    "dd/mm/yyyy",
                                     color = Color(0xFF828282),
-                                    fontSize = 14.sp
+                                    fontSize = 18.sp,
+                                    fontFamily = Montserrat,
+                                    fontWeight = FontWeight.Normal
                                 )
                             },
                             trailingIcon = {
@@ -296,11 +319,22 @@ fun CreateAccountScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.Gray,
+                                    shape = RoundedCornerShape(15.dp)
+                                )
                                 .clickable { showDatePicker = true },
                             singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(15.dp),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 18.sp,
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.Medium,
+                                color = if (birthday.isNotEmpty()) Color.Black else Color(0xFF828282)
+                            ),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Black,
+                                focusedBorderColor = Color(0xFFACBD6F),
                                 unfocusedBorderColor = Color.Gray,
                                 disabledBorderColor = Color.Gray,
                                 disabledTextColor = Color.Black
@@ -345,50 +379,13 @@ fun CreateAccountScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // enter email
-                        Text(
-                            text = "Email *",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                        )
-
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = { email = it },
-                            isError = email.isNotBlank() && !isEmailValid,
-                            placeholder = { Text("Email", color = Color(0xFF828282), fontSize = 14.sp) },
-                            modifier = Modifier
-                                .background(Color.White)
-                                .fillMaxWidth(),
-                            singleLine = true,
-                            shape = RoundedCornerShape(10.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Black,
-                                unfocusedBorderColor = Color.Gray
-                            ),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                        )
-                        if (email.isNotBlank() && !isEmailValid) {
-                            Text(
-                                text = "Please enter a valid email address",
-                                color = MaterialTheme.colorScheme.error,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
                         // enter password
                         Text(
                             text = "Password *",
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
+                            fontFamily = Montserrat,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
-                                .background(Color.White)
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
                         )
@@ -397,9 +394,30 @@ fun CreateAccountScreen(
                             value = password,
                             onValueChange = { password = it },
                             isError = password.isNotBlank() && !isPasswordValid,
-                            placeholder = { Text("Password", color = Color(0xFF828282), fontSize = 14.sp) },
-                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                Text(
+                                    "Create a pasword",
+                                    color = Color(0xFF828282),
+                                    fontSize = 18.sp,
+                                    fontFamily = Montserrat,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.Gray,
+                                    shape = RoundedCornerShape(15.dp)
+                                ),
                             singleLine = true,
+                            shape = RoundedCornerShape(15.dp),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 18.sp,
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.Medium,
+                                color = if (password.isNotEmpty()) Color.Black else Color(0xFF828282)
+                            ),
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
                                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -412,9 +430,8 @@ fun CreateAccountScreen(
                                     )
                                 }
                             },
-                            shape = RoundedCornerShape(10.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Black,
+                                focusedBorderColor = Color(0xFFACBD6F),
                                 unfocusedBorderColor = Color.Gray
                             ),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
@@ -433,10 +450,10 @@ fun CreateAccountScreen(
                         // enter password again
                         Text(
                             text = "Confirm Password *",
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
+                            fontFamily = Montserrat,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
-                                .background(Color.White)
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
                         )
@@ -444,9 +461,30 @@ fun CreateAccountScreen(
                         OutlinedTextField(
                             value = confirmPassword,
                             onValueChange = { confirmPassword = it },
-                            placeholder = { Text("Password", color = Color(0xFF828282), fontSize = 14.sp) },
-                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                Text(
+                                    "Confirm Password",
+                                    color = Color(0xFF828282),
+                                    fontSize = 18.sp,
+                                    fontFamily = Montserrat,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.Gray,
+                                    shape = RoundedCornerShape(15.dp)
+                                ),
                             singleLine = true,
+                            shape = RoundedCornerShape(15.dp),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 18.sp,
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.Medium,
+                                color = if (confirmPassword.isNotEmpty()) Color.Black else Color(0xFF828282)
+                            ),
                             visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
                                 IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
@@ -459,9 +497,8 @@ fun CreateAccountScreen(
                                     )
                                 }
                             },
-                            shape = RoundedCornerShape(10.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Black,
+                                focusedBorderColor = Color(0xFFACBD6F),
                                 unfocusedBorderColor = Color.Gray
                             ),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -488,18 +525,7 @@ fun CreateAccountScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .border(
-                        width = 5.dp,
-                        color = Color(0xFFF1F5EE),
-                    )
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .background(Color(0xFFAEB6A7), shape = RoundedCornerShape(0.dp)) // solid background
-                    .border(width = 5.dp, color = Color(0xFFF1F5EE))
+//                    .padding(horizontal = 22.dp)
             ) {
                 Button(
                     onClick = {
@@ -510,25 +536,29 @@ fun CreateAccountScreen(
                             confirmPassword == password,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .height(50.dp)
+                        .border(
+                            width = 2.dp,
+                            color = if (isNameValid && isEmailValid && isPasswordValid && isOldEnough && confirmPassword == password)
+                                Color(0xFFCBCBE7)
+                            else
+                                Color(0xFFCBCBE7).copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(15.dp)
+                        ),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFAEB6A7)
+                        containerColor = Color(0xFF595880),
+                        disabledContainerColor = Color(0xFF595880),
+                        disabledContentColor = Color.White
                     ),
-                    contentPadding = PaddingValues(0.dp),
-                    shape = RectangleShape
+                    shape = RoundedCornerShape(15.dp)
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Create Account ✮⋆˙",
-                            fontSize = 24.sp,
-                            color = Color.Black,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    Text(
+                        text = "Create Account",
+                        fontSize = 24.sp,
+                        color = Color.White,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
 
@@ -542,11 +572,21 @@ fun CreateAccountScreen(
                                 .padding(bottom = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            TextButton(onClick = { showSuccessDialog = false }) {
+                            TextButton(
+                                onClick = { showSuccessDialog = false },
+                                modifier = Modifier
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color.Black,
+                                        shape = RoundedCornerShape(15.dp)
+                                    )
+                                    .background(Color.White, RoundedCornerShape(15.dp))
+                            ) {
                                 Text(
-                                    text = "OK",
+                                    text = "ok",
+                                    fontFamily = Montserrat,
                                     fontWeight = FontWeight.SemiBold,
-                                    fontSize = 16.sp
+                                    fontSize = 20.sp
                                 )
                             }
                         }
@@ -555,27 +595,32 @@ fun CreateAccountScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 12.dp)
-                        )
-                        Text(
-                            text = " • *✰ Account Created!",
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(top = 12.dp)
-                        )
+                                .padding(top = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Account Created!",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                fontSize = 22.sp,
+                                modifier = Modifier.padding(top = 12.dp)
+                            )
+                        }
                     },
                     text = {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 12.dp)
+                                .padding(top = 12.dp),
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "Verification email sent to\n$email",
                                 textAlign = TextAlign.Center,
+                                fontFamily = Montserrat,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp,
+                                fontSize = 22.sp,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -590,14 +635,18 @@ fun CreateAccountScreen(
                 Text(
                     text = "Already have an account? ",
                     fontSize = 14.sp,
-                    color = Color.Black
+                    color = Color.Black,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = "Log In",
                     fontSize = 14.sp,
                     color = Color.Black,
                     textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable { onNavigateToLogin() }
+                    modifier = Modifier.clickable { onNavigateToLogin() },
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Medium
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
