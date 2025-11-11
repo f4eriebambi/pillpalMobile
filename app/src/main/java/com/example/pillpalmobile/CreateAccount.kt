@@ -532,9 +532,8 @@ fun CreateAccountScreen(
                         showSuccessDialog = true
                         onAccountCreated(email)
                     },
-                    enabled = /* isNameValid && isEmailValid && isPasswordValid && isOldEnough &&
-                            confirmPassword == password,*/
-                        true,
+                    enabled = isNameValid && isEmailValid && isPasswordValid && isOldEnough &&
+                            confirmPassword == password,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
