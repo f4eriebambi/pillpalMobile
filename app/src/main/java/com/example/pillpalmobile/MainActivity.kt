@@ -98,15 +98,15 @@ fun MainApp() {
 //                onNavigateToLogin = { },
 //                onNavigateToSignUp = { },
 //            )
-            LoginScreen(
-                onNavigateToSignUp = { /* */ },
-                onNavigateToHome = { /* */ },
-                onForgotPassword = { /* */ }
-            )
-//            CreateAccountScreen(
-//                onNavigateToLogin = { /* */ },
-//                onAccountCreated = { /* */ }
+//            LoginScreen(
+//                onNavigateToSignUp = { /* */ },
+//                onNavigateToHome = { /* */ },
+//                onForgotPassword = { /* */ }
 //            )
+            CreateAccountScreen(
+                onNavigateToLogin = { /* */ },
+                onAccountCreated = { /* */ }
+            )
         }
     }
 }
@@ -115,7 +115,7 @@ fun MainApp() {
 fun SplashScreen(onLoadingComplete: () -> Unit) {
 
     LaunchedEffect(Unit) {
-        delay(2000)
+        delay(3000)
         onLoadingComplete()
     }
 

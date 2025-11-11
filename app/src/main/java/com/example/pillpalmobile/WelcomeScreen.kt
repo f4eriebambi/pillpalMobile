@@ -49,7 +49,7 @@ fun WelcomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 22.dp)
         ) {
             Button(
                 onClick = onNavigateToLogin,
@@ -82,7 +82,7 @@ fun WelcomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 22.dp)
         ) {
             Button(
                 onClick = onNavigateToSignUp,
