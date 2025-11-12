@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -22,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
@@ -41,7 +44,7 @@ fun AddMedicationScreen(navController: NavHostController) {
     var currentStep by remember { mutableStateOf(1) }
 
     var medicationName by remember { mutableStateOf("") }
-    var selectedTime by remember { mutableStateOf("10:00") }
+    var selectedTimes by remember { mutableStateOf(listOf<String>()) }
     var selectedDate by remember { mutableStateOf(getCurrentDate()) }
     var repeatEnabled by remember { mutableStateOf(false) }
     var repeatFrequency by remember { mutableStateOf("Daily") }
@@ -49,6 +52,8 @@ fun AddMedicationScreen(navController: NavHostController) {
     var endDate by remember { mutableStateOf(getCurrentDate()) }
     var notes by remember { mutableStateOf("") }
     var showSuccessMessage by remember { mutableStateOf(false) }
+    var showTimePickerDialog by remember { mutableStateOf(false) }
+    var editingTimeIndex by remember { mutableStateOf<Int?>(null) }
 
     Box(
         modifier = Modifier
@@ -75,7 +80,7 @@ fun AddMedicationScreen(navController: NavHostController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp) // Height to cover header content and input field
+                    .height(200.dp)
             ) {
                 // 1. Background Image (header_rec.png)
                 Image(
@@ -93,19 +98,17 @@ fun AddMedicationScreen(navController: NavHostController) {
                             .fillMaxWidth()
                             .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
                     ) {
-                        // MODIFIED CANCEL BUTTON: Larger size
                         Image(
-                            painter = painterResource(id = R.drawable.cancel), // Your cancel.png
+                            painter = painterResource(id = R.drawable.cancel),
                             contentDescription = "Cancel Button",
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
                                 .size(130.dp, 80.dp)
-                                .clickable { navController.popBackStack() }, // Keeps functionality
+                                .clickable { navController.popBackStack() },
                             contentScale = ContentScale.Fit
                         )
                     }
 
-                    // Spacer to push the input field down
                     Spacer(modifier = Modifier.height(20.dp))
 
                     // Medication Name Input (Underlined BasicTextField)
@@ -122,7 +125,7 @@ fun AddMedicationScreen(navController: NavHostController) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 15.dp)
-                                    .align(Alignment.Center) // Centering the placeholder
+                                    .align(Alignment.Center)
                             )
                         }
                         BasicTextField(
@@ -132,17 +135,16 @@ fun AddMedicationScreen(navController: NavHostController) {
                             textStyle = TextStyle(
                                 color = Color.Black,
                                 fontSize = 17.sp,
-                                textAlign = TextAlign.Center // Centering the input text
+                                textAlign = TextAlign.Center
                             ),
                             singleLine = true,
                             decorationBox = { innerTextField ->
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally // Needed to center the inner text field
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     innerTextField()
                                     Spacer(modifier = Modifier.height(3.dp))
-                                    // Custom Underline using MedicationInputColor
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -157,19 +159,26 @@ fun AddMedicationScreen(navController: NavHostController) {
             }
             // --- END: LAYERED HEADER AND INPUT SECTION ---
 
-            // Rest of the screens content starts here
             when (currentStep) {
                 1 -> FirstScreen(
                     medicationName = medicationName,
-                    selectedTime = selectedTime,
+                    selectedTimes = selectedTimes,
                     selectedDate = selectedDate,
                     onMedicationNameChange = { medicationName = it },
-                    onTimeChange = { selectedTime = it },
+                    onTimesChange = { selectedTimes = it },
                     onDateChange = { selectedDate = it },
                     onContinue = {
-                        if (medicationName.isNotEmpty()) {
+                        if (medicationName.isNotEmpty() && selectedTimes.isNotEmpty()) {
                             currentStep = 2
                         }
+                    },
+                    onAddTimeClicked = {
+                        editingTimeIndex = null
+                        showTimePickerDialog = true
+                    },
+                    onEditTime = { index ->
+                        editingTimeIndex = index
+                        showTimePickerDialog = true
                     },
                     modifier = Modifier.weight(1f)
                 )
@@ -188,7 +197,7 @@ fun AddMedicationScreen(navController: NavHostController) {
                     onSave = {
                         saveMedication(
                             medicationName = medicationName,
-                            selectedTime = selectedTime,
+                            selectedTimes = selectedTimes,
                             selectedDate = selectedDate,
                             repeatEnabled = repeatEnabled,
                             repeatFrequency = repeatFrequency,
@@ -203,7 +212,7 @@ fun AddMedicationScreen(navController: NavHostController) {
             }
         }
 
-        // Success message overlay (remains unchanged)
+        // Success message overlay
         if (showSuccessMessage) {
             Box(
                 modifier = Modifier
@@ -246,6 +255,25 @@ fun AddMedicationScreen(navController: NavHostController) {
             }
         }
     }
+
+    // Time Picker Dialog
+    if (showTimePickerDialog) {
+        TimePickerDialog(
+            onDismiss = { showTimePickerDialog = false },
+            onTimeSelected = { time ->
+                editingTimeIndex?.let { index ->
+                    selectedTimes = selectedTimes.toMutableList().apply {
+                        set(index, time)
+                    }
+                } ?: run {
+                    if (selectedTimes.size < 4 && !selectedTimes.contains(time)) {
+                        selectedTimes = selectedTimes + time
+                    }
+                }
+                showTimePickerDialog = false
+            }
+        )
+    }
 }
 
 // -----------------------------------------------------------------------------------
@@ -254,19 +282,16 @@ fun AddMedicationScreen(navController: NavHostController) {
 @Composable
 fun FirstScreen(
     medicationName: String,
-    selectedTime: String,
+    selectedTimes: List<String>,
     selectedDate: String,
     onMedicationNameChange: (String) -> Unit,
-    onTimeChange: (String) -> Unit,
+    onTimesChange: (List<String>) -> Unit,
     onDateChange: (String) -> Unit,
     onContinue: () -> Unit,
+    onAddTimeClicked: () -> Unit,
+    onEditTime: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val timeOptions = listOf(
-        "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
-        "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
-        "18:00", "19:00", "20:00", "21:00", "22:00"
-    )
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column(
@@ -278,81 +303,22 @@ fun FirstScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Set Reminder Time Section (centered)
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // MODIFIED: Text changed to "Set Reminder Time"
-                Text(
-                    text = "Set Reminder Time",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // Scrollable Time Picker Box
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .height(280.dp)
-                        .border(2.dp, Color.Black, RoundedCornerShape(12.dp))
-                        .background(Color.White, RoundedCornerShape(12.dp))
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "Double click or scroll to set time",
-                        fontSize = 13.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
-                    )
-
-                    // Selected time display
-                    Box(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = selectedTime,
-                            fontSize = 56.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
+            // Set Reminder Time Section
+            SetReminderTimeSection(
+                selectedTimes = selectedTimes,
+                onTimeSelected = { time ->
+                    if (selectedTimes.size < 4 && !selectedTimes.contains(time)) {
+                        onTimesChange(selectedTimes + time)
                     }
-
-                    Divider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = Color.LightGray,
-                        thickness = 1.dp
-                    )
-
-                    // Scrollable time list
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        timeOptions.forEach { time ->
-                            Text(
-                                text = time,
-                                fontSize = 18.sp,
-                                color = if (time == selectedTime) Color.Black else Color.Gray,
-                                fontWeight = if (time == selectedTime) FontWeight.Bold else FontWeight.Normal,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onTimeChange(time) }
-                                    .padding(vertical = 10.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-            }
+                },
+                onTimeRemoved = { index ->
+                    onTimesChange(selectedTimes.filterIndexed { i, _ -> i != index })
+                },
+                onEditTime = onEditTime,
+                onAddTimeClicked = onAddTimeClicked
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -379,7 +345,6 @@ fun FirstScreen(
                     fontSize = 17.sp,
                     color = Color.Black
                 )
-                // Date image (R.drawable.date)
                 Image(
                     painter = painterResource(id = R.drawable.date),
                     contentDescription = "Date icon",
@@ -396,10 +361,10 @@ fun FirstScreen(
                 .padding(20.dp)
                 .height(50.dp),
             shape = RoundedCornerShape(10.dp),
-            enabled = medicationName.isNotEmpty(),
+            enabled = medicationName.isNotEmpty() && selectedTimes.isNotEmpty(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = ContinueButtonColor, // MODIFIED: New color
-                disabledContainerColor = ContinueButtonColor.copy(alpha = 0.5f) // MODIFIED: New color
+                containerColor = ContinueButtonColor,
+                disabledContainerColor = ContinueButtonColor.copy(alpha = 0.5f)
             )
         ) {
             Text(
@@ -420,6 +385,293 @@ fun FirstScreen(
             },
             onDismiss = { showDatePicker = false }
         )
+    }
+}
+
+// -----------------------------------------------------------------------------------
+
+@Composable
+fun SetReminderTimeSection(
+    selectedTimes: List<String>,
+    onTimeSelected: (String) -> Unit,
+    onTimeRemoved: (Int) -> Unit,
+    onEditTime: (Int) -> Unit,
+    onAddTimeClicked: () -> Unit
+) {
+    // Generate time options from 00:00 to 23:00
+    val allTimes = (0..23).map { hour ->
+        String.format("%02d:00", hour)
+    }
+
+    // Display time (largest or first selected)
+    val displayTime = selectedTimes.maxByOrNull { it } ?: "10:00"
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(16.dp))
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Set Reminder Time",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Large display time
+        Text(
+            text = displayTime,
+            fontSize = 48.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        // Scrollable time list
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        ) {
+            val scrollState = rememberScrollState()
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                allTimes.forEach { time ->
+                    TimeOptionItem(
+                        time = time,
+                        isSelected = selectedTimes.contains(time),
+                        onSingleClick = {
+                            if (!selectedTimes.contains(time)) {
+                                onTimeSelected(time)
+                            }
+                        },
+                        onDoubleClick = {
+                            onAddTimeClicked()
+                        }
+                    )
+                }
+            }
+
+            // Scrollbar indicator
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(40.dp)
+                    .background(Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
+                    .align(Alignment.CenterEnd)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Selected times with X buttons
+        selectedTimes.forEachIndexed { index, time ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .background(Color.White, RoundedCornerShape(8.dp))
+                    .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = time,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .weight(1f)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onDoubleTap = { onEditTime(index) }
+                            )
+                        }
+                )
+
+                Text(
+                    text = "x",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable { onTimeRemoved(index) }
+                        .padding(horizontal = 8.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Add Time button
+        if (selectedTimes.size < 4) {
+            Button(
+                onClick = onAddTimeClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black)
+            ) {
+                Text(
+                    text = "+ Add Time",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "You can add up to 4 reminder times.",
+            fontSize = 12.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun TimeOptionItem(
+    time: String,
+    isSelected: Boolean,
+    onSingleClick: () -> Unit,
+    onDoubleClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (isSelected) Color(0xFFF0F0F0) else Color.White,
+                RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) Color(0xFF638097) else Color(0xFFE0E0E0),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onSingleClick() },
+                    onDoubleTap = { onDoubleClick() }
+                )
+            }
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = time,
+            fontSize = 18.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    onDismiss: () -> Unit,
+    onTimeSelected: (String) -> Unit
+) {
+    var hour by remember { mutableStateOf(10) }
+    var minute by remember { mutableStateOf(0) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Enter Time",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    // Hour input
+                    OutlinedTextField(
+                        value = String.format("%02d", hour),
+                        onValueChange = {
+                            val newHour = it.toIntOrNull()
+                            if (newHour != null && newHour in 0..23) {
+                                hour = newHour
+                            }
+                        },
+                        modifier = Modifier.width(80.dp),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 24.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+
+                    Text(
+                        text = " : ",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+
+                    // Minute input
+                    OutlinedTextField(
+                        value = String.format("%02d", minute),
+                        onValueChange = {
+                            val newMinute = it.toIntOrNull()
+                            if (newMinute != null && newMinute in 0..59) {
+                                minute = newMinute
+                            }
+                        },
+                        modifier = Modifier.width(80.dp),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 24.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+
+                    Button(
+                        onClick = {
+                            val time = String.format("%02d:%02d", hour, minute)
+                            onTimeSelected(time)
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -621,7 +873,7 @@ fun SecondScreen(
             onClick = onSave,
             modifier = Modifier.fillMaxWidth().padding(20.dp).height(50.dp),
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = ContinueButtonColor) // MODIFIED: New color
+            colors = ButtonDefaults.buttonColors(containerColor = ContinueButtonColor)
         ) {
             Text(
                 text = "Save",
@@ -703,7 +955,7 @@ fun DatePickerDialog(
 
 private fun saveMedication(
     medicationName: String,
-    selectedTime: String,
+    selectedTimes: List<String>,
     selectedDate: String,
     repeatEnabled: Boolean,
     repeatFrequency: String,
@@ -713,6 +965,8 @@ private fun saveMedication(
     navController: NavHostController
 ) {
     val newId = DataSource.medications.size + 1
+
+    val timesText = selectedTimes.joinToString(", ")
 
     val frequencyText = if (repeatEnabled) {
         "$repeatFrequency from $startDate to $endDate"
@@ -724,7 +978,7 @@ private fun saveMedication(
         id = newId,
         name = medicationName,
         dosage = "",
-        frequency = "$selectedTime - $frequencyText",
+        frequency = "$timesText - $frequencyText",
         notes = notes
     )
 
