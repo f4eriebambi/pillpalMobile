@@ -95,7 +95,7 @@ fun MainApp() {
 //                    showSplash = false
 //                }
 //            )
-            HomeScreen()
+//            HomeScreen()
 //            WelcomeScreen(
 //                onNavigateToLogin = { },
 //                onNavigateToSignUp = { },
@@ -109,6 +109,7 @@ fun MainApp() {
 //                onNavigateToLogin = { /* */ },
 //                onAccountCreated = { /* */ }
 //            )
+            EditMedicationScreen {  }
         }
     }
 }
