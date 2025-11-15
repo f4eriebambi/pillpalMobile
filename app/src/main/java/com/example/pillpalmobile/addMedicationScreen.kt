@@ -4,22 +4,26 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,6 +34,11 @@ import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import java.text.SimpleDateFormat
 import java.util.*
+
+// Add these font family declarations (from EditMedication)
+val SFPro = FontFamily.Default
+val Inter = FontFamily.Default
+val Montserrat = FontFamily.Default
 
 // Old Cream color for general UI elements (backgrounds, switches)
 val CreamColor = Color(0xFFFFC46E)
@@ -44,7 +53,8 @@ fun AddMedicationScreen(navController: NavHostController) {
     var currentStep by remember { mutableStateOf(1) }
 
     var medicationName by remember { mutableStateOf("") }
-    var selectedTimes by remember { mutableStateOf(listOf<String>()) }
+    var times by remember { mutableStateOf(mutableStateListOf("10:00", "15:00")) }
+    var activeTimeIndex by remember { mutableStateOf(0) }
     var selectedDate by remember { mutableStateOf(getCurrentDate()) }
     var repeatEnabled by remember { mutableStateOf(false) }
     var repeatFrequency by remember { mutableStateOf("Daily") }
@@ -52,8 +62,9 @@ fun AddMedicationScreen(navController: NavHostController) {
     var endDate by remember { mutableStateOf(getCurrentDate()) }
     var notes by remember { mutableStateOf("") }
     var showSuccessMessage by remember { mutableStateOf(false) }
-    var showTimePickerDialog by remember { mutableStateOf(false) }
-    var editingTimeIndex by remember { mutableStateOf<Int?>(null) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var showRemoveTimeDialog by remember { mutableStateOf(-1) }
+    var showCancelDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -76,110 +87,125 @@ fun AddMedicationScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .then(if (showSuccessMessage) Modifier.blur(8.dp) else Modifier)
         ) {
-            // --- START: LAYERED HEADER AND INPUT SECTION WITH IMAGE BACKGROUND ---
-            Box(
+            // --- START: REPLACED HEADER SECTION WITH EDITMEDICATION STYLE (COMPACT) ---
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .shadow(
+                        elevation = 4.dp,
+                        spotColor = Color.Black,
+                        ambientColor = Color.Black,
+                        clip = false
+                    )
+                    .background(
+                        Color(0xFFFFFDF4)
+                    )
+                    .padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 40.dp)
             ) {
-                // 1. Background Image (header_rec.png)
-                Image(
-                    painter = painterResource(id = R.drawable.header_rec),
-                    contentDescription = "Header background rectangle",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds
-                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // 2. Content (Layered on top of the image)
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Status Bar / Header (Cancel button ONLY)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
+                // Cancel button (EditMedication style)
+                Surface(
+                    onClick = { showCancelDialog = true },
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    shadowElevation = 4.dp,
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                ) {
+                    Text(
+                        text = "Cancel",
+                        fontSize = 16.sp,
+                        fontFamily = SFPro,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xff333333),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Medication name input (EditMedication style)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { /* This makes the entire area clickable to focus the text field */ }
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.cancel),
-                            contentDescription = "Cancel Button",
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .size(130.dp, 80.dp)
-                                .clickable { navController.popBackStack() },
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Medication Name Input (Underlined BasicTextField)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                    ) {
+                        // Visible text display
                         if (medicationName.isEmpty()) {
                             Text(
                                 text = "enter medication name",
-                                color = MedicationInputColor.copy(alpha = 0.8f),
-                                fontSize = 19.sp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 15.dp)
-                                    .align(Alignment.Center)
+                                fontSize = 24.sp,
+                                fontFamily = SFPro,
+                                fontWeight = FontWeight.Normal,
+                                color = Color(0xff595880).copy(alpha = 0.6f)
+                            )
+                        } else {
+                            Text(
+                                text = medicationName,
+                                fontSize = 24.sp,
+                                fontFamily = SFPro,
+                                fontWeight = FontWeight.Normal,
+                                color = Color(0xff595880)
                             )
                         }
-                        BasicTextField(
-                            value = medicationName,
-                            onValueChange = { medicationName = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = TextStyle(
-                                color = Color.Black,
-                                fontSize = 17.sp,
-                                textAlign = TextAlign.Center
-                            ),
-                            singleLine = true,
-                            decorationBox = { innerTextField ->
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    innerTextField()
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(1.dp)
-                                            .background(MedicationInputColor)
-                                    )
-                                }
-                            }
+
+                        Spacer(modifier = Modifier.height(3.dp))
+
+                        // Border line
+                        Box(
+                            modifier = Modifier
+                                .width(250.dp)
+                                .height(1.5.dp)
+                                .background(Color(0xFF595880))
                         )
                     }
+
+                    // Visible but semi-transparent text field for input
+                    BasicTextField(
+                        value = medicationName,
+                        onValueChange = { medicationName = it },
+                        modifier = Modifier
+                            .width(250.dp)
+                            .height(35.dp)
+                            .alpha(0.01f), // Almost invisible but still clickable
+                        textStyle = TextStyle(
+                            fontSize = 24.sp,
+                            fontFamily = SFPro,
+                            fontWeight = FontWeight.Normal,
+                            color = Color(0xff595880),
+                            textAlign = TextAlign.Center
+                        ),
+                        singleLine = true
+                    )
                 }
             }
-            // --- END: LAYERED HEADER AND INPUT SECTION ---
-
+// --- END: REPLACED HEADER SECTION ---
             when (currentStep) {
                 1 -> FirstScreen(
                     medicationName = medicationName,
-                    selectedTimes = selectedTimes,
+                    times = times,
+                    activeTimeIndex = activeTimeIndex,
                     selectedDate = selectedDate,
                     onMedicationNameChange = { medicationName = it },
-                    onTimesChange = { selectedTimes = it },
+                    onTimesChange = { newTimes ->
+                        times.clear()
+                        times.addAll(newTimes)
+                    },
+                    onActiveTimeIndexChange = { activeTimeIndex = it },
                     onDateChange = { selectedDate = it },
                     onContinue = {
-                        if (medicationName.isNotEmpty() && selectedTimes.isNotEmpty()) {
+                        if (medicationName.isNotEmpty() && times.isNotEmpty()) {
                             currentStep = 2
                         }
                     },
-                    onAddTimeClicked = {
-                        editingTimeIndex = null
-                        showTimePickerDialog = true
-                    },
-                    onEditTime = { index ->
-                        editingTimeIndex = index
-                        showTimePickerDialog = true
-                    },
+                    onShowTimePicker = { showTimePicker = true },
+                    onShowRemoveTimeDialog = { showRemoveTimeDialog = it },
                     modifier = Modifier.weight(1f)
                 )
                 2 -> SecondScreen(
@@ -197,7 +223,7 @@ fun AddMedicationScreen(navController: NavHostController) {
                     onSave = {
                         saveMedication(
                             medicationName = medicationName,
-                            selectedTimes = selectedTimes,
+                            times = times,
                             selectedDate = selectedDate,
                             repeatEnabled = repeatEnabled,
                             repeatFrequency = repeatFrequency,
@@ -212,67 +238,332 @@ fun AddMedicationScreen(navController: NavHostController) {
             }
         }
 
-        // Success message overlay
+        // Success message overlay - UPDATED DESIGN to match screenshot exactly
         if (showSuccessMessage) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f)),
-                contentAlignment = Alignment.Center
+            Dialog(
+                onDismissRequest = { showSuccessMessage = false }
             ) {
                 Card(
                     modifier = Modifier
-                        .padding(32.dp)
                         .fillMaxWidth(0.85f),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Title - "Medication Added:" in bold (exact text from screenshot)
                         Text(
-                            text = "✓",
-                            fontSize = 48.sp,
-                            color = Color(0xFF34C759),
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                        Text(
-                            text = "Medication has been added successfully",
+                            text = "Medication Added:",
                             fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Black,
-                            textAlign = TextAlign.Center
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF333333),
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
+
+                        // Message - matches the screenshot text exactly
+                        Text(
+                            text = "You have successfully added a new medication",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color(0xFF666666),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 24.dp)
+                        )
+
+                        // OK Button - white button with black text and border
+                        Button(
+                            onClick = {
+                                showSuccessMessage = false
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .border(
+                                    width = 1.dp,
+                                    color = Color.Black,
+                                    shape = RoundedCornerShape(10.dp)
+                                ),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White
+                            )
+                        ) {
+                            Text(
+                                text = "OK",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
-            }
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(2000)
-                showSuccessMessage = false
-                navController.popBackStack()
             }
         }
-    }
 
-    // Time Picker Dialog
-    if (showTimePickerDialog) {
-        TimePickerDialog(
-            onDismiss = { showTimePickerDialog = false },
-            onTimeSelected = { time ->
-                editingTimeIndex?.let { index ->
-                    selectedTimes = selectedTimes.toMutableList().apply {
-                        set(index, time)
+        // time picker modal (from EditMedication)
+        if (showTimePicker) {
+            val timePickerState = rememberTimePickerState(
+                initialHour = 8,
+                initialMinute = 0,
+                is24Hour = true
+            )
+
+            AlertDialog(
+                onDismissRequest = { showTimePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val formattedTime = String.format(
+                                "%02d:%02d",
+                                timePickerState.hour,
+                                timePickerState.minute
+                            )
+
+                            if (activeTimeIndex < times.size) {
+                                times[activeTimeIndex] = formattedTime
+                            }
+
+                            showTimePicker = false
+                        }
+                    ) {
+                        Text(
+                            text = "OK",
+                            fontFamily = SFPro,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFFACBD6F),
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(horizontal = 42.dp)
+                        )
                     }
-                } ?: run {
-                    if (selectedTimes.size < 4 && !selectedTimes.contains(time)) {
-                        selectedTimes = selectedTimes + time
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showTimePicker = false }
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            fontFamily = SFPro,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF595880),
+                            fontSize = 20.sp,
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Text(
+                            text = "Select Time",
+                            fontSize = 20.sp,
+                            fontFamily = SFPro,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF595880),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        TimePicker(
+                            state = timePickerState,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                },
+                containerColor = Color(0xFFFFFDF4),
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+
+        // remove time X button modal (from EditMedication)
+        if (showRemoveTimeDialog >= 0) {
+            AlertDialog(
+                onDismissRequest = { showRemoveTimeDialog = -1 },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        TextButton(
+                            onClick = {
+                                val indexToRemove = showRemoveTimeDialog
+                                times.removeAt(indexToRemove)
+                                if (activeTimeIndex >= times.size) {
+                                    activeTimeIndex = times.size - 1
+                                }
+                                showRemoveTimeDialog = -1
+                            },
+                            modifier = Modifier
+                                .border(
+                                    width = 1.dp,
+                                    color = Color.Black,
+                                    shape = RoundedCornerShape(15.dp)
+                                )
+                                .background(Color.White, RoundedCornerShape(15.dp))
+                        ) {
+                            Text(
+                                text = "yes",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 20.sp
+                            )
+                        }
+
+                        TextButton(
+                            onClick = { showRemoveTimeDialog = -1 },
+                            modifier = Modifier
+                                .border(
+                                    width = 1.dp,
+                                    color = Color.Black,
+                                    shape = RoundedCornerShape(15.dp)
+                                )
+                                .background(Color.White, RoundedCornerShape(15.dp))
+                        ) {
+                            Text(
+                                text = "cancel",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
+                },
+                title = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Remove Time?",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            fontSize = 22.sp,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                },
+
+                text = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Are you sure you want to remove this\nreminder time?",
+                            textAlign = TextAlign.Center,
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 22.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
-                showTimePickerDialog = false
-            }
-        )
+            )
+        }
+
+        // cancel button modal (from EditMedication)
+        if (showCancelDialog) {
+            AlertDialog(
+                onDismissRequest = { showCancelDialog = false },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        TextButton(
+                            onClick = {
+                                showCancelDialog = false
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier
+                                .border(
+                                    width = 1.dp,
+                                    color = Color.Black,
+                                    shape = RoundedCornerShape(15.dp)
+                                )
+                                .background(Color.White, RoundedCornerShape(15.dp))
+                        ) {
+                            Text(
+                                text = "yes",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 20.sp
+                            )
+                        }
+
+                        TextButton(
+                            onClick = { showCancelDialog = false },
+                            modifier = Modifier
+                                .border(
+                                    width = 1.dp,
+                                    color = Color.Black,
+                                    shape = RoundedCornerShape(15.dp)
+                                )
+                                .background(Color.White, RoundedCornerShape(15.dp))
+                        ) {
+                            Text(
+                                text = "cancel",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
+                },
+                title = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Discard changes?",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            fontSize = 22.sp,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                },
+
+                text = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Are you sure you want to leave without \nsaving?",
+                            textAlign = TextAlign.Center,
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 22.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -282,14 +573,16 @@ fun AddMedicationScreen(navController: NavHostController) {
 @Composable
 fun FirstScreen(
     medicationName: String,
-    selectedTimes: List<String>,
+    times: List<String>,
+    activeTimeIndex: Int,
     selectedDate: String,
     onMedicationNameChange: (String) -> Unit,
     onTimesChange: (List<String>) -> Unit,
+    onActiveTimeIndexChange: (Int) -> Unit,
     onDateChange: (String) -> Unit,
     onContinue: () -> Unit,
-    onAddTimeClicked: () -> Unit,
-    onEditTime: (Int) -> Unit,
+    onShowTimePicker: () -> Unit,
+    onShowRemoveTimeDialog: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -305,20 +598,156 @@ fun FirstScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Set Reminder Time Section
-            SetReminderTimeSection(
-                selectedTimes = selectedTimes,
-                onTimeSelected = { time ->
-                    if (selectedTimes.size < 4 && !selectedTimes.contains(time)) {
-                        onTimesChange(selectedTimes + time)
-                    }
-                },
-                onTimeRemoved = { index ->
-                    onTimesChange(selectedTimes.filterIndexed { i, _ -> i != index })
-                },
-                onEditTime = onEditTime,
-                onAddTimeClicked = onAddTimeClicked
+            // Set Reminder Time Section (replaced with EditMedication style)
+            Text(
+                text = "Set Reminder Time",
+                fontSize = 23.sp,
+                fontFamily = SFPro,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black,
+                modifier = Modifier
+                    .padding(bottom = 12.dp)
+                    .padding(horizontal = 44.dp)
             )
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 42.dp)
+                    .border(1.dp, Color(0xffb7b7b7), RoundedCornerShape(10.dp)),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    // big time display button
+                    Button(
+                        onClick = { onShowTimePicker() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFFFFF)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 2.dp
+                        )
+                    ) {
+                        Text(
+                            text = if (times.isNotEmpty() && activeTimeIndex < times.size)
+                                times[activeTimeIndex] else "Select Time",
+                            fontSize = 32.sp,
+                            fontFamily = Inter,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black,
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // list of times
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        times.forEachIndexed { index, time ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        if (index == activeTimeIndex) Color(0xFFACBD6F) else Color.White,
+                                        RoundedCornerShape(10.dp)
+                                    )
+                                    .border(
+                                        2.dp,
+                                        if (index == activeTimeIndex) Color.Black else Color(0xFFACBD6F),
+                                        RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable { onActiveTimeIndexChange(index) }
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+
+                                // time text
+                                Text(
+                                    text = time,
+                                    fontSize = 18.sp,
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.Black,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                // show X button if more than 1 time
+                                if (times.size > 1) {
+                                    IconButton(
+                                        onClick = { onShowRemoveTimeDialog(index) },
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .align(Alignment.CenterVertically)
+                                    ) {
+                                        Text(
+                                            text = "✕",
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // add time button
+                    Button(
+                        onClick = {
+                            if (times.size < 4) {
+                                onTimesChange(times + "10:00")
+                                onActiveTimeIndexChange(times.size)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp)
+                            .border(2.dp, Color.Black, RoundedCornerShape(15.dp)),
+                        enabled = times.size < 4,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 2.dp
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = "+ Add Time",
+                            fontSize = 18.sp,
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // limit reminder
+                    Text(
+                        text = "You can add up to 4 reminder times.",
+                        fontSize = 16.sp,
+                        fontFamily = SFPro,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFA1A1A1),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -361,7 +790,7 @@ fun FirstScreen(
                 .padding(20.dp)
                 .height(50.dp),
             shape = RoundedCornerShape(10.dp),
-            enabled = medicationName.isNotEmpty() && selectedTimes.isNotEmpty(),
+            enabled = medicationName.isNotEmpty() && times.isNotEmpty(),
             colors = ButtonDefaults.buttonColors(
                 containerColor = ContinueButtonColor,
                 disabledContainerColor = ContinueButtonColor.copy(alpha = 0.5f)
@@ -391,293 +820,6 @@ fun FirstScreen(
 // -----------------------------------------------------------------------------------
 
 @Composable
-fun SetReminderTimeSection(
-    selectedTimes: List<String>,
-    onTimeSelected: (String) -> Unit,
-    onTimeRemoved: (Int) -> Unit,
-    onEditTime: (Int) -> Unit,
-    onAddTimeClicked: () -> Unit
-) {
-    // Generate time options from 00:00 to 23:00
-    val allTimes = (0..23).map { hour ->
-        String.format("%02d:00", hour)
-    }
-
-    // Display time (largest or first selected)
-    val displayTime = selectedTimes.maxByOrNull { it } ?: "10:00"
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(16.dp))
-            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(16.dp))
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Set Reminder Time",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Large display time
-        Text(
-            text = displayTime,
-            fontSize = 48.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        // Scrollable time list
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-        ) {
-            val scrollState = rememberScrollState()
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                allTimes.forEach { time ->
-                    TimeOptionItem(
-                        time = time,
-                        isSelected = selectedTimes.contains(time),
-                        onSingleClick = {
-                            if (!selectedTimes.contains(time)) {
-                                onTimeSelected(time)
-                            }
-                        },
-                        onDoubleClick = {
-                            onAddTimeClicked()
-                        }
-                    )
-                }
-            }
-
-            // Scrollbar indicator
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(40.dp)
-                    .background(Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
-                    .align(Alignment.CenterEnd)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Selected times with X buttons
-        selectedTimes.forEachIndexed { index, time ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .background(Color.White, RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = time,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .weight(1f)
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onDoubleTap = { onEditTime(index) }
-                            )
-                        }
-                )
-
-                Text(
-                    text = "x",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clickable { onTimeRemoved(index) }
-                        .padding(horizontal = 8.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Add Time button
-        if (selectedTimes.size < 4) {
-            Button(
-                onClick = onAddTimeClicked,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
-                ),
-                shape = RoundedCornerShape(8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black)
-            ) {
-                Text(
-                    text = "+ Add Time",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "You can add up to 4 reminder times.",
-            fontSize = 12.sp,
-            color = Color.Gray,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun TimeOptionItem(
-    time: String,
-    isSelected: Boolean,
-    onSingleClick: () -> Unit,
-    onDoubleClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                if (isSelected) Color(0xFFF0F0F0) else Color.White,
-                RoundedCornerShape(8.dp)
-            )
-            .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) Color(0xFF638097) else Color(0xFFE0E0E0),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onSingleClick() },
-                    onDoubleTap = { onDoubleClick() }
-                )
-            }
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = time,
-            fontSize = 18.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimePickerDialog(
-    onDismiss: () -> Unit,
-    onTimeSelected: (String) -> Unit
-) {
-    var hour by remember { mutableStateOf(10) }
-    var minute by remember { mutableStateOf(0) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Enter Time",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    // Hour input
-                    OutlinedTextField(
-                        value = String.format("%02d", hour),
-                        onValueChange = {
-                            val newHour = it.toIntOrNull()
-                            if (newHour != null && newHour in 0..23) {
-                                hour = newHour
-                            }
-                        },
-                        modifier = Modifier.width(80.dp),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(
-                            fontSize = 24.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    )
-
-                    Text(
-                        text = " : ",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-
-                    // Minute input
-                    OutlinedTextField(
-                        value = String.format("%02d", minute),
-                        onValueChange = {
-                            val newMinute = it.toIntOrNull()
-                            if (newMinute != null && newMinute in 0..59) {
-                                minute = newMinute
-                            }
-                        },
-                        modifier = Modifier.width(80.dp),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(
-                            fontSize = 24.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-
-                    Button(
-                        onClick = {
-                            val time = String.format("%02d:%02d", hour, minute)
-                            onTimeSelected(time)
-                        }
-                    ) {
-                        Text("OK")
-                    }
-                }
-            }
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------------
-
-@Composable
 fun SecondScreen(
     medicationName: String,
     repeatEnabled: Boolean,
@@ -692,9 +834,10 @@ fun SecondScreen(
     onNotesChange: (String) -> Unit,
     onSave: () -> Unit
 ) {
-    val frequencyOptions = listOf("Daily", "Weekly", "Monthly")
+    val frequencyOptions = listOf("Daily", "Weekly", "Custom")
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
+    var selectedDays by remember { mutableStateOf<List<String>>(emptyList()) }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -743,98 +886,100 @@ fun SecondScreen(
             if (repeatEnabled) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // How Often Section
-                Text(
-                    text = "How Often",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
+                // How Often Section - Label and selector on same line
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    frequencyOptions.forEach { frequency ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(45.dp)
-                                .background(
-                                    color = if (frequency == repeatFrequency) CreamColor else Color.White,
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (frequency == repeatFrequency) CreamColor else Color(0xFFE5E5EA),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .clickable { onRepeatFrequencyChange(frequency) },
-                            contentAlignment = Alignment.Center
+                    Text(
+                        text = "How Often",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    // Frequency selector with arrows - lighter gray background
+                    Row(
+                        modifier = Modifier
+                            .width(150.dp)
+                            .background(Color(0xFFD8D8D8), RoundedCornerShape(8.dp)) // Lighter gray
+                            .padding(horizontal = 12.dp, vertical = 8.dp), // Reduced vertical padding
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = repeatFrequency,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF757575)
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp) // Reduced spacing between arrows
                         ) {
-                            Text(
-                                text = frequency,
-                                fontSize = 16.sp,
-                                color = if (frequency == repeatFrequency) Color.White else Color.Black,
-                                fontWeight = if (frequency == repeatFrequency) FontWeight.SemiBold else FontWeight.Normal
-                            )
+                            // Down arrow button
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp) // Slightly smaller size
+                                    .clickable {
+                                        val currentIndex = frequencyOptions.indexOf(repeatFrequency)
+                                        val newIndex = (currentIndex - 1 + frequencyOptions.size) % frequencyOptions.size
+                                        onRepeatFrequencyChange(frequencyOptions[newIndex])
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "↓",
+                                    fontSize = 14.sp, // Slightly smaller font
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF757575)
+                                )
+                            }
+
+                            // Up arrow button
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp) // Slightly smaller size
+                                    .clickable {
+                                        val currentIndex = frequencyOptions.indexOf(repeatFrequency)
+                                        val newIndex = (currentIndex + 1) % frequencyOptions.size
+                                        onRepeatFrequencyChange(frequencyOptions[newIndex])
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "↑",
+                                    fontSize = 14.sp, // Slightly smaller font
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF757575)
+                                )
+                            }
                         }
                     }
                 }
 
-                // Start Date
-                Text(
-                    text = "Start Date",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White, RoundedCornerShape(10.dp))
-                        .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(10.dp))
-                        .clickable { showStartDatePicker = true }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = startDate, fontSize = 17.sp, color = Color.Black)
-                    Image(
-                        painter = painterResource(id = R.drawable.date),
-                        contentDescription = "Date icon",
-                        modifier = Modifier.size(24.dp)
+                // Show days of week only for Weekly frequency
+                if (repeatFrequency == "Weekly") {
+                    WhichDaySection(
+                        selectedDays = selectedDays,
+                        onDaysChanged = { selectedDays = it }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // End Date
-                Text(
-                    text = "End Date",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White, RoundedCornerShape(10.dp))
-                        .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(10.dp))
-                        .clickable { showEndDatePicker = true }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = endDate, fontSize = 17.sp, color = Color.Black)
-                    Image(
-                        painter = painterResource(id = R.drawable.date),
-                        contentDescription = "Date icon",
-                        modifier = Modifier.size(24.dp)
+                // Show start and end dates only for Custom frequency
+                if (repeatFrequency == "Custom") {
+                    CustomDateSection(
+                        startDate = startDate,
+                        endDate = endDate,
+                        onStartDateChange = onStartDateChange,
+                        onEndDateChange = onEndDateChange,
+                        showStartDatePicker = { showStartDatePicker = true },
+                        showEndDatePicker = { showEndDatePicker = true }
                     )
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
             Spacer(modifier = Modifier.height(if (!repeatEnabled) 24.dp else 0.dp))
@@ -868,18 +1013,25 @@ fun SecondScreen(
             )
         }
 
-        // Save Button
+        // Save Button - Updated colors
         Button(
             onClick = onSave,
-            modifier = Modifier.fillMaxWidth().padding(20.dp).height(50.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+                .height(50.dp)
+                .border(2.dp, Color(0xFFF16F33), RoundedCornerShape(10.dp)),
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = ContinueButtonColor)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFCE2A9), // Inside color
+                contentColor = Color(0xFFF16F33) // Text color
+            )
         ) {
             Text(
                 text = "Save",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White
+                color = Color(0xFFF16F33) // Text color
             )
         }
     }
@@ -904,6 +1056,142 @@ fun SecondScreen(
             },
             onDismiss = { showEndDatePicker = false }
         )
+    }
+}
+
+
+@Composable
+fun WhichDaySection(
+    selectedDays: List<String>,
+    onDaysChanged: (List<String>) -> Unit
+) {
+    val days = listOf(
+        "M" to "Monday",
+        "T" to "Tuesday",
+        "W" to "Wednesday",
+        "T" to "Thursday",
+        "F" to "Friday",
+        "S" to "Saturday",
+        "S" to "Sunday"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Which Day",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(end = 16.dp)
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                days.forEachIndexed { index, (abbreviation, fullName) ->
+                    val isSelected = selectedDays.contains(fullName)
+
+                    Text(
+                        text = "[$abbreviation]",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = if (isSelected) Color(0xFF4A86E8) else Color.Black,
+                        modifier = Modifier.clickable {
+                            val isCurrentlySelected = selectedDays.contains(fullName)
+                            val newSelectedDays = if (isCurrentlySelected) {
+                                selectedDays - fullName
+                            } else {
+                                selectedDays + fullName
+                            }
+                            onDaysChanged(newSelectedDays)
+                        }
+                    )
+                }
+            }
+        }
+
+        // Show selected days text for feedback
+        if (selectedDays.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Selected: ${selectedDays.joinToString(", ")}",
+                fontSize = 14.sp,
+                color = Color(0xFF666666),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+@Composable
+fun CustomDateSection(
+    startDate: String,
+    endDate: String,
+    onStartDateChange: (String) -> Unit,
+    onEndDateChange: (String) -> Unit,
+    showStartDatePicker: () -> Unit,
+    showEndDatePicker: () -> Unit
+) {
+    Column {
+        // Start Date
+        Text(
+            text = "Start Date",
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(10.dp))
+                .clickable { showStartDatePicker() }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = startDate, fontSize = 17.sp, color = Color.Black)
+            Image(
+                painter = painterResource(id = R.drawable.date),
+                contentDescription = "Date icon",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // End Date
+        Text(
+            text = "End Date",
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(10.dp))
+                .clickable { showEndDatePicker() }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = endDate, fontSize = 17.sp, color = Color.Black)
+            Image(
+                painter = painterResource(id = R.drawable.date),
+                contentDescription = "Date icon",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -955,7 +1243,7 @@ fun DatePickerDialog(
 
 private fun saveMedication(
     medicationName: String,
-    selectedTimes: List<String>,
+    times: List<String>,
     selectedDate: String,
     repeatEnabled: Boolean,
     repeatFrequency: String,
@@ -966,7 +1254,7 @@ private fun saveMedication(
 ) {
     val newId = DataSource.medications.size + 1
 
-    val timesText = selectedTimes.joinToString(", ")
+    val timesText = times.joinToString(", ")
 
     val frequencyText = if (repeatEnabled) {
         "$repeatFrequency from $startDate to $endDate"
