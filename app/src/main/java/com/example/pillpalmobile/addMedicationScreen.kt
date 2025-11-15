@@ -64,8 +64,8 @@ fun AddMedicationScreen(navController: NavHostController) {
     var showSuccessMessage by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showRemoveTimeDialog by remember { mutableStateOf(-1) }
-    var showCancelDialog by remember { mutableStateOf(false) }
-
+    var showCancelDialog by remember {  mutableStateOf(false) }
+// add medication page
     Box(
         modifier = Modifier
             .fillMaxSize()
