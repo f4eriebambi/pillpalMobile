@@ -330,7 +330,9 @@ fun EditMedicationScreen(
                                     text = "OK",
                                     fontFamily = SFPro,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFFACBD6F)   // your original "OK" green
+                                    color = Color(0xFFACBD6F),
+                                    fontSize = 20.sp,
+                                    modifier = Modifier.padding(horizontal = 42.dp)
                                 )
                             }
                         },
@@ -342,7 +344,9 @@ fun EditMedicationScreen(
                                     text = "Cancel",
                                     fontFamily = SFPro,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF595880)   // your purple
+                                    color = Color(0xFF595880),
+                                    fontSize = 20.sp,
+//                                    modifier = Modifier.padding(horizontal = 8.dp)
                                 )
                             }
                         },
@@ -354,7 +358,6 @@ fun EditMedicationScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
 
-                                // Title (matches your theme)
                                 Text(
                                     text = "Select Time",
                                     fontSize = 20.sp,
@@ -364,14 +367,13 @@ fun EditMedicationScreen(
                                     modifier = Modifier.padding(bottom = 16.dp)
                                 )
 
-                                // Official Material3 TimePicker (dial version)
                                 TimePicker(
                                     state = timePickerState,
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
                                 )
                             }
                         },
-                        containerColor = Color(0xFFFFFDF4),   // your creamy background
+                        containerColor = Color(0xFFFFFDF4),
                         shape = RoundedCornerShape(16.dp)
                     )
                 }
