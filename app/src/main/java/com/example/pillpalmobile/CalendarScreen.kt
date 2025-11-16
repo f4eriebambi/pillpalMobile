@@ -373,34 +373,67 @@ fun PlanCards(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        // morning plan - only show if has meds
-        if (morningMeds.isNotEmpty()) {
-            PlanCard(
-                icon = "☼",
-                title = "Morning Plan",
-                subtitle = "Rise and Shine",
-                medications = morningMeds
-            )
-        }
+        // empty state when no meds for the day
+        if (displayMeds.isEmpty()) {
+            // Simple centered design
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        painter = painterResource(R.drawable.pills),
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = Color(0xFFA1A1A1)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No medications today",
+                        fontSize = 20.sp,
+                        fontFamily = Montserrat,
+                        color = Color(0xFF666666)
+                    )
+                    Text(
+                        text = "Enjoy your day off!",
+                        fontSize = 16.sp,
+                        fontFamily = SFPro,
+                        color = Color(0xFFA1A1A1)
+                    )
+                }
+            }
+        } else {
+            // morning plan - only show if has meds
+            if (morningMeds.isNotEmpty()) {
+                PlanCard(
+                    icon = "☼",
+                    title = "Morning Plan",
+                    subtitle = "Rise and Shine",
+                    medications = morningMeds
+                )
+            }
 
-        // afternoon plan - only show if has meds
-        if (afternoonMeds.isNotEmpty()) {
-            PlanCard(
-                icon = null,
-                title = "Afternoon Plan",
-                subtitle = "Keep Going",
-                medications = afternoonMeds
-            )
-        }
+            // afternoon plan - only show if has meds
+            if (afternoonMeds.isNotEmpty()) {
+                PlanCard(
+                    icon = null,
+                    title = "Afternoon Plan",
+                    subtitle = "Keep Going",
+                    medications = afternoonMeds
+                )
+            }
 
-        // evening plan - only show if has meds
-        if (eveningMeds.isNotEmpty()) {
-            PlanCard(
-                icon = "☾",
-                title = "Evening Plan",
-                subtitle = "Wind Down",
-                medications = eveningMeds
-            )
+            // evening plan - only show if has meds
+            if (eveningMeds.isNotEmpty()) {
+                PlanCard(
+                    icon = "☾",
+                    title = "Evening Plan",
+                    subtitle = "Wind Down",
+                    medications = eveningMeds
+                )
+            }
         }
     }
 }
