@@ -723,7 +723,7 @@ fun RepeatSection(
                     onCheckedChange = onRepeatEnabledChange,
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFFACBD6F),
+                        checkedTrackColor = Color(0xFF34C759),
                         uncheckedThumbColor = Color.White,
                         uncheckedTrackColor = Color(0xFFE0E0E0)
                     )
