@@ -111,6 +111,7 @@ fun MainApp() {
 //                onNavigateToLogin = { /* */ },
 //                onAccountCreated = { /* */ }
 //            )
+            EditMedicationScreen {  }
         }
     }
 }
