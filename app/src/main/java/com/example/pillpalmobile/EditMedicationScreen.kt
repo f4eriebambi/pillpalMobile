@@ -73,6 +73,20 @@ fun EditMedicationScreen(
     val datePickerState = rememberDatePickerState()
     // notes
     var notes by remember { mutableStateOf("") }
+    // save
+    var showSaveConfirmDialog by remember { mutableStateOf(false) }
+    var showSaveSuccessDialog by remember { mutableStateOf(false) }
+    // check if any field is changed
+    val hasChanges =
+        name != medication?.name ||
+                times.toList() != medication?.reminderTimes ||
+                repeatEnabled != medication?.repeatEnabled ||
+                howOften != medication?.repeatFrequency ||
+                selectedDays.toList() != medication?.repeatDays ||
+                startDateValue != medication?.repeatStartDate ||  // FIXED: Now both are Long?
+                endDateValue != medication?.repeatEndDate ||      // FIXED: Now both are Long?
+                medicationDate != medication?.medicationDate ||
+                notes != medication?.notes
 
     Box(
         modifier = Modifier
@@ -159,12 +173,39 @@ fun EditMedicationScreen(
                     Column(verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = name,
-                            fontSize = 28.sp,
-                            fontFamily = SFPro,
-                            fontWeight = FontWeight.Normal,
-                            color = Color(0xff595880)
+                        // now editable med name
+                        TextField(
+                            value = name,
+                            onValueChange = { name = it },
+                            textStyle = LocalTextStyle.current.copy(
+                                fontFamily = SFPro,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 28.sp,
+                                textAlign = TextAlign.Center,
+                                color = Color(0xff595880)
+                            ),
+                            modifier = Modifier
+                                .width(275.dp)
+                                .wrapContentHeight(),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                cursorColor = Color(0xFF595880)
+                            ),
+                            singleLine = true,
+                            placeholder = {
+                                Text(
+                                    text = "medication name",
+                                    fontFamily = SFPro,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 28.sp,
+                                    textAlign = TextAlign.Center,
+                                    color = Color.Gray
+                                )
+                            }
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -938,29 +979,11 @@ fun EditMedicationScreen(
                 // save button
                 Button(
                     onClick = {
-                        // create list of selected days if repeat is weekly
-                        val weeklyDays = if (howOften == "Weekly") {
-                            val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                            selectedDays.mapIndexedNotNull { index, isSelected ->
-                                if (isSelected) dayNames[index] else null
-                            }
-                        } else emptyList()
-
-                        // create updated medication object
-                        val updatedMedication = Medication(
-                            id = medicationId,
-                            name = name,
-                            reminderTimes = times.toList(),
-                            medicationDate = if (!repeatEnabled) medicationDate else "",
-                            repeatEnabled = repeatEnabled,
-                            repeatFrequency = if (repeatEnabled) howOften else "Daily",
-                            repeatDays = weeklyDays,
-                            repeatStartDate = if (howOften == "Custom") startDate else null,
-                            repeatEndDate = if (howOften == "Custom") endDate else null,
-                            notes = notes
-                        )
-                        onSave(updatedMedication)
+                        if (hasChanges) {
+                            showSaveConfirmDialog = true
+                        }
                     },
+                    enabled = hasChanges,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 38.dp)
@@ -1253,6 +1276,185 @@ fun EditMedicationScreen(
                             fontWeight = FontWeight.Medium,
                             fontSize = 22.sp,
                             modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            )
+        }
+
+        // save changes confirmation modal
+        if (showSaveConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showSaveConfirmDialog = false },
+
+                confirmButton = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+
+                        // yes button to save changes
+                        TextButton(
+                            onClick = {
+                                showSaveConfirmDialog = false
+
+                                // if repeat is enabled, get the selected days
+                                val weeklyDays = if (howOften == "Weekly") {
+                                    val dayNames = listOf("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
+                                    selectedDays.mapIndexedNotNull { index, isSelected ->
+                                        if (isSelected) dayNames[index] else null
+                                    }
+                                } else emptyList()
+
+                                val updatedMedication = Medication(
+                                    id = medicationId,
+                                    name = name,
+                                    reminderTimes = times.toList(),
+                                    medicationDate = if (!repeatEnabled) medicationDate else "",
+                                    repeatEnabled = repeatEnabled,
+                                    repeatFrequency = if (repeatEnabled) howOften else "Daily",
+                                    repeatDays = weeklyDays,
+                                    repeatStartDate = if (howOften == "Custom") startDateValue else null,
+                                    repeatEndDate = if (howOften == "Custom") endDateValue else null,
+                                    notes = notes
+                                )
+
+                                onSave(updatedMedication)
+
+                                // show success modal
+                                showSaveSuccessDialog = true
+                            },
+                            modifier = Modifier
+                                .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                                .background(Color.White, RoundedCornerShape(15.dp))
+                        ) {
+                            Text(
+                                text = "yes",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 20.sp
+                            )
+                        }
+
+                        // cancel button
+                        TextButton(
+                            onClick = { showSaveConfirmDialog = false },
+                            modifier = Modifier
+                                .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                                .background(Color.White, RoundedCornerShape(15.dp))
+                        ) {
+                            Text(
+                                text = "cancel",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
+                },
+
+                title = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Save changes?",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            fontSize = 22.sp,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                },
+
+                text = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Are you sure you want to apply \nall changes to this medication?",
+                            textAlign = TextAlign.Center,
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 22.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            )
+        }
+
+        // save success modal
+        if (showSaveSuccessDialog) {
+            AlertDialog(
+                onDismissRequest = { showSaveSuccessDialog = false },
+
+                confirmButton = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextButton(
+                            onClick = {
+                                showSaveSuccessDialog = false
+                                // navigate back to home
+                                // onNavigateBack()
+                            },
+                            modifier = Modifier
+                                .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                                .background(Color.White, RoundedCornerShape(15.dp))
+                        ) {
+                            Text(
+                                text = "ok",
+                                fontFamily = Montserrat,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
+                },
+
+                title = {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp)
+                    ) {
+                        Text(
+                            text = "Medication Updated!",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 22.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                },
+
+                text = {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp)
+                    ) {
+                        Text(
+                            text = "Your changes have been\nsuccessfully saved.",
+                            textAlign = TextAlign.Center,
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 22.sp
                         )
                     }
                 }

@@ -8,7 +8,7 @@ data class Medication(
     val repeatEnabled: Boolean = false, // repeat toggle
     val repeatFrequency: String = "Daily", // daily,weekly,custom
     val repeatDays: List<String> = emptyList(), // for weekly = ["Mon", "Wed", "Fri"]
-    val repeatStartDate: String? = null, // for custom
-    val repeatEndDate: String? = null, // for custom
+    val repeatStartDate: Long? = null, // for custom
+    val repeatEndDate: Long? = null, // for custom
     val notes: String = "" // optional notes
 )
