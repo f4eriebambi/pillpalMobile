@@ -111,7 +111,10 @@ fun MainApp() {
 //                onNavigateToLogin = { /* */ },
 //                onAccountCreated = { /* */ }
 //            )
-            EditMedicationScreen {  }
+//            EditMedicationScreen {  }
+            CalendarScreen(
+                medications = DataSource.medications
+            )
         }
     }
 }
