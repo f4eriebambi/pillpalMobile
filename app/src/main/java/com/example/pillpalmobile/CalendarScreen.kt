@@ -1,5 +1,6 @@
 package com.example.pillpalmobile
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,19 +16,105 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pillpalmobile.model.Medication
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.*
+import java.util.Locale
+
+
+// https://www.youtube.com/watch?v=vL_3r9tz1gM
+// https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/filter.html
+// https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/sorted-by.html
+
+
+// display model for calendar
+data class MedicationDisplay(
+    val name: String,
+    val time: String,
+    val isTaken: Boolean,
+    val medication: Medication // ref to real data
+)
+
+// make sure med is converted to display format of figma
+private fun List<Medication>.toCalendarDisplay(): List<MedicationDisplay> {
+    return this.flatMap { medication ->
+        medication.reminderTimes.map { time ->
+            MedicationDisplay(
+                name = medication.name,
+                time = time,
+                isTaken = false, // placeholder, tracking will be handled by backend
+                medication = medication
+            )
+        }
+    }
+}
+
+// filter meds for selected date
+private fun List<Medication>.filterForDate(selectedDate: LocalDate): List<Medication> {
+    val formatter = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy", Locale.ENGLISH)
+
+    val selectedDateString = selectedDate.format(formatter) // e.g. "Fri, Nov 7, 2025"
+
+    return this.filter { medication ->
+
+        // REPEAT ENABLED
+        if (medication.repeatEnabled) {
+            when (medication.repeatFrequency) {
+
+                "Daily" -> true
+
+                "Weekly" -> {
+                    val selectedDay = selectedDate.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
+                    val normalized = selectedDay.take(3)  // "Mon", "Tue", "Wed"
+                    medication.repeatDays.any { it.take(3).equals(normalized, ignoreCase = true) }
+                }
+
+                "Custom" -> {
+                    if (medication.repeatStartDate != null && medication.repeatEndDate != null) {
+                        val start = Instant.ofEpochMilli(medication.repeatStartDate).atZone(ZoneId.systemDefault()).toLocalDate()
+                        val end = Instant.ofEpochMilli(medication.repeatEndDate).atZone(ZoneId.systemDefault()).toLocalDate()
+
+                        // inclusive range
+                        !selectedDate.isBefore(start) && !selectedDate.isAfter(end)
+                    } else false
+                }
+
+                else -> false
+            }
+
+        } else {
+            // ONE-TIME MED
+            try {
+                // quick match string → string
+                if (medication.medicationDate.equals(selectedDateString, ignoreCase = true)) {
+                    return@filter true
+                }
+
+                val medDate = LocalDate.parse(medication.medicationDate, formatter)
+                medDate == selectedDate
+
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+}
 
 @Composable
-fun CalendarScreen() {
+fun CalendarScreen(
+    medications: List<Medication> = emptyList(),
+    onAddMedication: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
     val currentDate = remember { LocalDate.now() }
     val selectedDate = remember { mutableStateOf(currentDate) }
@@ -46,7 +133,10 @@ fun CalendarScreen() {
         ) {
             // scrolling parts
             // plan of the day
-            PlanCards(selectedDate = selectedDate.value)
+            PlanCards(
+                selectedDate = selectedDate.value,
+                medications = medications
+            )
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -127,7 +217,7 @@ fun CalendarScreen() {
                 .padding(bottom = 120.dp)
         ) {
             Button(
-                onClick = { /* navigate to add med page */ },
+                onClick = onAddMedication,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 38.dp)
@@ -209,8 +299,8 @@ fun DateNumbersRow(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    // get current week dates
-    val startOfWeek = currentDate.minusDays(currentDate.dayOfWeek.value.toLong() - 1)
+    // get start of week for current date
+    val startOfWeek = selectedDate.minusDays(selectedDate.dayOfWeek.value.toLong() - 1)
     val weekDates = (0..6).map { startOfWeek.plusDays(it.toLong()) }
 
     Row(
@@ -218,8 +308,7 @@ fun DateNumbersRow(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         weekDates.forEach { date ->
-            val isSelected = date.dayOfMonth == selectedDate.dayOfMonth &&
-                    date.month == selectedDate.month
+            val isSelected = date == selectedDate
             val isToday = date == currentDate
             val isPast = date.isBefore(currentDate)
             val isFuture = date.isAfter(currentDate)
@@ -257,27 +346,25 @@ fun DateNumbersRow(
 
 // plan of the day
 @Composable
-fun PlanCards(selectedDate: LocalDate) {
-    // mock med with times
-    val mockMedications = listOf(
-        MedicationWithTime("vitamin C", "08:00", true),
-        MedicationWithTime("omega-3", "14:00", true),
-        MedicationWithTime("melatonin", "20:00", false),
-        MedicationWithTime("TEST", "19:00", false)
-    )
+fun PlanCards(
+    selectedDate: LocalDate,
+    medications: List<Medication>
+    ) {
+    val filteredMeds = medications.filterForDate(selectedDate)
+    val displayMeds = filteredMeds.toCalendarDisplay()
 
     // make sure meds into correct time section
-    val morningMeds = mockMedications.filter { med ->
+    val morningMeds = displayMeds.filter { med ->
         val time = LocalTime.parse(med.time)
         time.hour in 5..11
     }.sortedBy { LocalTime.parse(it.time) } // sort by time
 
-    val afternoonMeds = mockMedications.filter { med ->
+    val afternoonMeds = displayMeds.filter { med ->
         val time = LocalTime.parse(med.time)
         time.hour in 12..16
     }.sortedBy { LocalTime.parse(it.time) }
 
-    val eveningMeds = mockMedications.filter { med ->
+    val eveningMeds = displayMeds.filter { med ->
         val time = LocalTime.parse(med.time)
         time.hour in 17..23 || time.hour in 0..4
     }.sortedBy { LocalTime.parse(it.time) }
@@ -324,7 +411,7 @@ fun PlanCard(
     icon: String?,
     title: String,
     subtitle: String,
-    medications: List<MedicationWithTime>
+    medications: List<MedicationDisplay>
 ) {
     Card(
         modifier = Modifier
@@ -557,10 +644,3 @@ fun NavigationButton(
         }
     }
 }
-
-// data class for mock med with time
-data class MedicationWithTime(
-    val name: String,
-    val time: String,
-    val isTaken: Boolean
-)

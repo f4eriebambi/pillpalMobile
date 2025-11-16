@@ -110,7 +110,9 @@ fun MainApp() {
 //                onAccountCreated = { /* */ }
 //            )
 //            EditMedicationScreen {  }
-            CalendarScreen()
+            CalendarScreen(
+                medications = DataSource.medications
+            )
         }
     }
 }
