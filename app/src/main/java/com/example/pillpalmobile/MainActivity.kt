@@ -109,6 +109,7 @@ fun MainApp() {
 //                onNavigateToLogin = { /* */ },
 //                onAccountCreated = { /* */ }
 //            )
+//            EditMedicationScreen {  }
             CalendarScreen()
         }
     }
