@@ -71,6 +71,8 @@ fun EditMedicationScreen(
     var medicationDate by remember { mutableStateOf(SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault()).format(Date())) }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+    // notes
+    var notes by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -417,7 +419,7 @@ fun EditMedicationScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // REPEAT SECTION will go here (Commit 3)
+                // repeat section
                 Text(
                     text = "Repeat",
                     fontSize = 23.sp,
@@ -425,23 +427,24 @@ fun EditMedicationScreen(
                     fontWeight = FontWeight.Medium,
                     color = Color.Black,
                     modifier = Modifier
+                        .background(Color.White)
                         .padding(bottom = 12.dp)
-                        .padding(horizontal = 44.dp)
+                        .padding(horizontal = 20.dp)
                 )
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 42.dp)
-                        .border(1.dp, Color(0xffb7b7b7), RoundedCornerShape(10.dp)),
-                    shape = RoundedCornerShape(10.dp),
+                        .padding(horizontal = 24.dp)
+                        .border(0.5.dp, Color.Black, RoundedCornerShape(5.dp)),
+                    shape = RoundedCornerShape(5.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+//                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp)
                     ) {
-                        // Repeat Toggle
+                        // repeat toggle
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -467,11 +470,11 @@ fun EditMedicationScreen(
                             )
                         }
 
-                        // Show options when repeat is enabled
+                        // show how often section of when to repeat when repeat ON
                         if (repeatEnabled) {
                             Spacer(modifier = Modifier.height(20.dp))
 
-                            // How Often Dropdown
+                            // how often dropdown
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -492,7 +495,10 @@ fun EditMedicationScreen(
                                             containerColor = Color(0xFFF0F0F0)
                                         ),
                                         shape = RoundedCornerShape(20.dp),
-                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                        elevation = ButtonDefaults.buttonElevation(
+                                            defaultElevation = 4.dp
+                                        )
                                     ) {
                                         Text(
                                             text = howOften,
@@ -539,7 +545,7 @@ fun EditMedicationScreen(
                                 }
                             }
 
-                            // Weekly: Which Days
+                            // weekly (which days)
                             if (howOften == "Weekly") {
                                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -588,14 +594,12 @@ fun EditMedicationScreen(
                                 }
                             }
 
-                            // Custom: Start and End Dates
+                            // custom (start + end dates)
                             if (howOften == "Custom") {
 
                                 Spacer(modifier = Modifier.height(20.dp))
 
-                                // -----------------------
-                                // Start Date
-                                // -----------------------
+                                // start date
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -629,9 +633,7 @@ fun EditMedicationScreen(
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                // -----------------------
-                                // End Date
-                                // -----------------------
+                                // end date
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -681,7 +683,7 @@ fun EditMedicationScreen(
                     }
                 }
 
-                // Date Pickers for Custom
+                // date picker modal for custom repeat 1
                 if (showStartDatePicker) {
                     DatePickerDialog(
                         onDismissRequest = { showStartDatePicker = false },
@@ -695,7 +697,7 @@ fun EditMedicationScreen(
                                         val df = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
                                         startDate = df.format(Date(millis))
 
-                                        // auto-correct end date if needed
+                                        // if end date is before start date, reset end date
                                         if (endDateValue != null && millis > endDateValue!!) {
                                             endDateValue = millis
                                             endDate = df.format(Date(millis))
@@ -729,7 +731,8 @@ fun EditMedicationScreen(
                         DatePicker(state = startDatePickerState)
                     }
                 }
-                
+
+                // date picker modal for custom repeat 2
                 if (showEndDatePicker) {
                     DatePickerDialog(
                         onDismissRequest = { showEndDatePicker = false },
@@ -743,7 +746,7 @@ fun EditMedicationScreen(
                                         val df = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
                                         endDate = df.format(Date(millis))
 
-                                        // auto-correct start date if needed
+                                        // if start date is after end date, reset start date
                                         if (startDateValue != null && millis < startDateValue!!) {
                                             startDateValue = millis
                                             startDate = df.format(Date(millis))
@@ -780,7 +783,7 @@ fun EditMedicationScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // DATE SECTION (only shows when repeat is OFF)
+                // date section (only shows when repeat is OFF)
                 if (!repeatEnabled) {
                     Text(
                         text = "Date",
@@ -790,17 +793,17 @@ fun EditMedicationScreen(
                         color = Color.Black,
                         modifier = Modifier
                             .padding(bottom = 12.dp)
-                            .padding(horizontal = 44.dp)
+                            .padding(horizontal = 20.dp)
                     )
 
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 42.dp)
-                            .border(1.dp, Color(0xffb7b7b7), RoundedCornerShape(10.dp)),
-                        shape = RoundedCornerShape(10.dp),
+                            .padding(horizontal = 24.dp)
+                            .border(0.5.dp, Color.Black, RoundedCornerShape(5.dp)),
+                        shape = RoundedCornerShape(5.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+//                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -827,7 +830,7 @@ fun EditMedicationScreen(
                         }
                     }
 
-                    // Date Picker Dialog
+                    // date picker modal for date section
                     if (showDatePicker) {
                         DatePickerDialog(
                             onDismissRequest = { showDatePicker = false },
@@ -870,9 +873,117 @@ fun EditMedicationScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // NOTES SECTION will go here (Commit 4)
+                // notes section
+                Text(
+                    text = "Notes (Optional)",
+                    fontSize = 23.sp,
+                    fontFamily = SFPro,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .background(Color.White)
+                        .padding(bottom = 12.dp)
+                        .padding(horizontal = 20.dp)
+                )
 
-                // SAVE BUTTON will go here (Commit 4)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .border(1.dp, Color.Black),
+//                    shape = RoundedCornerShape(5.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+//                    Column(
+//                        modifier = Modifier.padding(20.dp)
+//                    ) {
+                        OutlinedTextField(
+                            value = notes,
+                            onValueChange = { notes = it },
+                            placeholder = {
+                                Text(
+                                    text = "(e.g. \"Take with water\", \"Don't take with dairy\", etc.)",
+                                    fontSize = 18.sp,
+                                    fontFamily = SFPro,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color(0xFFA1A1A1)
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp),
+//                            shape = RoundedCornerShape(10.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+//                                focusedBorderColor = Color(0xFFACBD6F),
+//                                unfocusedBorderColor = Color(0xFFE0E0E0),
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White
+                            ),
+                            textStyle =
+                                TextStyle(
+                                fontSize = 18.sp,
+                                fontFamily = SFPro,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.Black
+                            )
+                        )
+//                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // save button
+                Button(
+                    onClick = {
+                        // create list of selected days if repeat is weekly
+                        val weeklyDays = if (howOften == "Weekly") {
+                            val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                            selectedDays.mapIndexedNotNull { index, isSelected ->
+                                if (isSelected) dayNames[index] else null
+                            }
+                        } else emptyList()
+
+                        // create updated medication object
+                        val updatedMedication = Medication(
+                            id = medicationId,
+                            name = name,
+                            reminderTimes = times.toList(),
+                            medicationDate = if (!repeatEnabled) medicationDate else "",
+                            repeatEnabled = repeatEnabled,
+                            repeatFrequency = if (repeatEnabled) howOften else "Daily",
+                            repeatDays = weeklyDays,
+                            repeatStartDate = if (howOften == "Custom") startDate else null,
+                            repeatEndDate = if (howOften == "Custom") endDate else null,
+                            notes = notes
+                        )
+                        onSave(updatedMedication)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 38.dp)
+                        .height(56.dp)
+                        .border(2.5.dp, Color(0xFFFCE2A9), RoundedCornerShape(15.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(15.dp),
+//                    elevation = ButtonDefaults.buttonElevation(
+//                        defaultElevation = 4.dp
+//                    )
+                ) {
+                    Text(
+                        text = "Save",
+                        fontSize = 24.sp,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFF16F33)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
 
