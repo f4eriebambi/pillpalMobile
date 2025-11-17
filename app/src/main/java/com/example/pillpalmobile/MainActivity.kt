@@ -97,7 +97,8 @@ fun MainApp() {
 //                }
 //            )
 //            HomeScreen()
-            SettingsScreen()
+            HistoryScreen()
+//            SettingsScreen()
 //            WelcomeScreen(
 //                onNavigateToLogin = { },
 //                onNavigateToSignUp = { },
@@ -112,9 +113,9 @@ fun MainApp() {
 //                onAccountCreated = { /* */ }
 //            )
 //            EditMedicationScreen {  }
-            CalendarScreen(
-                medications = DataSource.medications
-            )
+//            CalendarScreen(
+//                medications = DataSource.medications
+//            )
         }
     }
 }
