@@ -848,125 +848,146 @@ fun SecondScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            // Medication Name Display
-            Text(
-                text = medicationName,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
             // Repeat Toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(10.dp))
-                    .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(10.dp))
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Repeat",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Switch(
-                    checked = repeatEnabled,
-                    onCheckedChange = onRepeatEnabledChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFF34C759),
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = Color(0xFFE5E5EA)
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Repeat",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium
                     )
+                    Switch(
+                        checked = repeatEnabled,
+                        onCheckedChange = onRepeatEnabledChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF34C759),
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = Color(0xFFE5E5EA)
+                        )
+                    )
+                }
+                // Floating line under Repeat toggle
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 200.dp, end = 16.dp)
+                        .height(1.dp)
+                        .background(Color(0xFFE5E5EA))
                 )
             }
 
             if (repeatEnabled) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // How Often Section - Label and selector on same line
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "How Often",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    // Frequency selector with arrows - lighter gray background
+                // How Often Section
+                Column {
                     Row(
                         modifier = Modifier
-                            .width(150.dp)
-                            .background(Color(0xFFD8D8D8), RoundedCornerShape(8.dp)) // Lighter gray
-                            .padding(horizontal = 12.dp, vertical = 8.dp), // Reduced vertical padding
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = repeatFrequency,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF757575)
+                            text = "How Often",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
 
+                        // Frequency selector with arrows - Updated with larger arrows
                         Row(
+                            modifier = Modifier
+                                .width(150.dp)
+                                .background(Color(0xFFD8D8D8), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp) // Reduced spacing between arrows
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // Down arrow button
-                            Box(
-                                modifier = Modifier
-                                    .size(22.dp) // Slightly smaller size
-                                    .clickable {
-                                        val currentIndex = frequencyOptions.indexOf(repeatFrequency)
-                                        val newIndex = (currentIndex - 1 + frequencyOptions.size) % frequencyOptions.size
-                                        onRepeatFrequencyChange(frequencyOptions[newIndex])
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "↓",
-                                    fontSize = 14.sp, // Slightly smaller font
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF757575)
-                                )
-                            }
+                            Text(
+                                text = repeatFrequency,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF757575)
+                            )
 
-                            // Up arrow button
-                            Box(
-                                modifier = Modifier
-                                    .size(22.dp) // Slightly smaller size
-                                    .clickable {
-                                        val currentIndex = frequencyOptions.indexOf(repeatFrequency)
-                                        val newIndex = (currentIndex + 1) % frequencyOptions.size
-                                        onRepeatFrequencyChange(frequencyOptions[newIndex])
-                                    },
-                                contentAlignment = Alignment.Center
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(1.dp)
                             ) {
-                                Text(
-                                    text = "↑",
-                                    fontSize = 14.sp, // Slightly smaller font
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF757575)
-                                )
+                                // Down arrow button - Larger size
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp) // Increased from 20.dp
+                                        .clickable {
+                                            val currentIndex = frequencyOptions.indexOf(repeatFrequency)
+                                            val newIndex = (currentIndex - 1 + frequencyOptions.size) % frequencyOptions.size
+                                            onRepeatFrequencyChange(frequencyOptions[newIndex])
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "↓",
+                                        fontSize = 18.sp, // Increased from 12.sp
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF757575)
+                                    )
+                                }
+
+                                // Up arrow button - Larger size
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp) // Increased from 20.dp
+                                        .clickable {
+                                            val currentIndex = frequencyOptions.indexOf(repeatFrequency)
+                                            val newIndex = (currentIndex + 1) % frequencyOptions.size
+                                            onRepeatFrequencyChange(frequencyOptions[newIndex])
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "↑",
+                                        fontSize = 18.sp, // Increased from 12.sp
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF757575)
+                                    )
+                                }
                             }
                         }
                     }
+                    // Floating line under How Often
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 200.dp, end = 16.dp)
+                            .height(1.dp)
+                            .background(Color(0xFFE5E5EA))
+                    )
                 }
 
                 // Show days of week only for Weekly frequency
                 if (repeatFrequency == "Weekly") {
-                    WhichDaySection(
-                        selectedDays = selectedDays,
-                        onDaysChanged = { selectedDays = it }
-                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Column {
+                        WhichDaySection(
+                            selectedDays = selectedDays,
+                            onDaysChanged = { selectedDays = it }
+                        )
+                        // Floating line under Which Day
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 200.dp, end = 16.dp)
+                                .height(1.dp)
+                                .background(Color(0xFFE5E5EA))
+                        )
+                    }
                 }
 
                 // Show start and end dates only for Custom frequency
@@ -994,7 +1015,9 @@ fun SecondScreen(
             OutlinedTextField(
                 value = notes,
                 onValueChange = onNotesChange,
-                modifier = Modifier.fillMaxWidth().height(140.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(190.dp),
                 placeholder = {
                     Text(
                         "(e.g. \"Take with water\", \"Don't take with dairy\", etc.)",
@@ -1004,8 +1027,8 @@ fun SecondScreen(
                 },
                 maxLines = 6,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFE5E5EA),
-                    unfocusedBorderColor = Color(0xFFE5E5EA),
+                    focusedBorderColor = Color(0xFF8E8E93),
+                    unfocusedBorderColor = Color(0xFF8E8E93),
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
                 ),
@@ -1013,7 +1036,7 @@ fun SecondScreen(
             )
         }
 
-        // Save Button - Updated colors
+        // Save Button
         Button(
             onClick = onSave,
             modifier = Modifier
@@ -1023,15 +1046,15 @@ fun SecondScreen(
                 .border(2.dp, Color(0xFFF16F33), RoundedCornerShape(10.dp)),
             shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFCE2A9), // Inside color
-                contentColor = Color(0xFFF16F33) // Text color
+                containerColor = Color(0xFFFCE2A9),
+                contentColor = Color(0xFFF16F33)
             )
         ) {
             Text(
                 text = "Save",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFF16F33) // Text color
+                color = Color(0xFFF16F33)
             )
         }
     }
@@ -1058,8 +1081,6 @@ fun SecondScreen(
         )
     }
 }
-
-
 @Composable
 fun WhichDaySection(
     selectedDays: List<String>,
@@ -1129,6 +1150,8 @@ fun WhichDaySection(
         }
     }
 }
+
+
 @Composable
 fun CustomDateSection(
     startDate: String,
@@ -1139,62 +1162,103 @@ fun CustomDateSection(
     showEndDatePicker: () -> Unit
 ) {
     Column {
-        // Start Date
-        Text(
-            text = "Start Date",
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(10.dp))
-                .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(10.dp))
-                .clickable { showStartDatePicker() }
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = startDate, fontSize = 17.sp, color = Color.Black)
-            Image(
-                painter = painterResource(id = R.drawable.date),
-                contentDescription = "Date icon",
-                modifier = Modifier.size(24.dp)
+        // Start Date Section
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Start Date",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                // Start Date picker on same line - removed box outline
+                Row(
+                    modifier = Modifier
+                        .clickable { showStartDatePicker() }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = startDate,
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Normal
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.date),
+                        contentDescription = "Calendar icon",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            // Floating line under Start Date
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 200.dp, end = 16.dp)
+                    .height(1.dp)
+                    .background(Color(0xFFE5E5EA))
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // End Date
-        Text(
-            text = "End Date",
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(10.dp))
-                .border(1.dp, Color(0xFFE5E5EA), RoundedCornerShape(10.dp))
-                .clickable { showEndDatePicker() }
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = endDate, fontSize = 17.sp, color = Color.Black)
-            Image(
-                painter = painterResource(id = R.drawable.date),
-                contentDescription = "Date icon",
-                modifier = Modifier.size(24.dp)
+        // End Date Section
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "End Date",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                // End Date picker on same line - removed box outline
+                Row(
+                    modifier = Modifier
+                        .clickable { showEndDatePicker() }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = endDate,
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Normal
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.date),
+                        contentDescription = "Calendar icon",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            // Floating line under End Date
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 200.dp, end = 16.dp)
+                    .height(1.dp)
+                    .background(Color(0xFFE5E5EA))
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
-
 // -----------------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
