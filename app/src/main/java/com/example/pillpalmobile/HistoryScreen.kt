@@ -70,7 +70,7 @@ data class DayHistory(
 @Composable
 fun HistoryScreen(
     medications: List<Medication> = emptyList(),
-    currentStreak: Int = 0, // TODO BACKEND: Calculate from API
+    currentStreak: Int = 0, // for BACKEND: Calculate from API
     onNavigateHome: () -> Unit = {},
     onNavigateCalendar: () -> Unit = {},
     onNavigateNotifications: () -> Unit = {},
@@ -78,10 +78,8 @@ fun HistoryScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    // ═══════════════════════════════════════════════════════════════
-    // HARDCODED TEST STREAK - Change this to test different values
-    // ═══════════════════════════════════════════════════════════════
-    val testStreak = 7 // TODO: Remove this and use currentStreak parameter
+    // HARDCODED TEST FOR STREAK - i changed to currentStreak parameter instead of testStreak after done testing
+//    val testStreak = 7 // commenting after im done testing
 
     // generate history from med data
     val historyData = remember(medications) {
@@ -113,13 +111,15 @@ fun HistoryScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // day streak counter
-            StreakCard(currentStreak = testStreak)
+            // day streak counter, changed from testStreak as finished testing
+            StreakCard(currentStreak = currentStreak)
 
             Spacer(modifier = Modifier.height(20.dp))
 
             // history log
             MedicationHistoryLog(historyData = historyData)
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         // nav bar
@@ -140,80 +140,79 @@ fun HistoryScreen(
 }
 
 /**
- * i generated history from medications
+ * for the frontend i generated history from meds
  * simulates what BACKEND would return
  *
  * for BACKEND: replace this with actual API call to get history data
  * including "taken" status, timestamps, etc.
  */
 private fun generateHistoryFromMedications(medications: List<Medication>): List<DayHistory> {
-    // HARDCODED TEST DATA - Shows all badge types
+    // HARDCODED TEST DATA - showing all badge types
     // commenting once i check that the display is correct
-
-    val today = LocalDate.now()
-    return listOf(
-        // TODAY - mix of statuses to show all badges
-        DayHistory(
-            date = today,
-            entries = listOf(
-                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
-                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.MISSED),
-                MedicationHistoryEntry("medication 2", "20:00", HistoryStatus.UPCOMING)
-            ),
-            allTaken = false
-        ),
-        // YESTERDAY - all taken (should show "all medications" card)
-        DayHistory(
-            date = today.minusDays(1),
-            entries = listOf(
-                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
-                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.TAKEN),
-                MedicationHistoryEntry("medication 3", "20:00", HistoryStatus.TAKEN)
-            ),
-            allTaken = true
-        ),
-        // 2 DAYS AGO - mix of taken and missed
-        DayHistory(
-            date = today.minusDays(2),
-            entries = listOf(
-                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
-                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.MISSED),
-                MedicationHistoryEntry("medication 3", "20:00", HistoryStatus.TAKEN)
-            ),
-            allTaken = false
-        ),
-        // 3 DAYS AGO - all taken (should show "all medications" card)
-        DayHistory(
-            date = today.minusDays(3),
-            entries = listOf(
-                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
-                MedicationHistoryEntry("medication 2", "12:00", HistoryStatus.TAKEN)
-            ),
-            allTaken = true
-        ),
-        // 4 DAYS AGO - all missed (worst case scenario)
-        DayHistory(
-            date = today.minusDays(4),
-            entries = listOf(
-                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.MISSED),
-                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.MISSED),
-                MedicationHistoryEntry("medication 3", "20:00", HistoryStatus.MISSED)
-            ),
-            allTaken = false
-        )
-    )
+//    val today = LocalDate.now()
+//    return listOf(
+//        // TODAY - mix of statuses to show all badges
+//        DayHistory(
+//            date = today,
+//            entries = listOf(
+//                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
+//                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.MISSED),
+//                MedicationHistoryEntry("medication 2", "20:00", HistoryStatus.UPCOMING)
+//            ),
+//            allTaken = false
+//        ),
+//        // YESTERDAY - all taken (should show "all medications" card)
+//        DayHistory(
+//            date = today.minusDays(1),
+//            entries = listOf(
+//                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
+//                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.TAKEN),
+//                MedicationHistoryEntry("medication 3", "20:00", HistoryStatus.TAKEN)
+//            ),
+//            allTaken = true
+//        ),
+//        // 2 DAYS AGO - mix of taken and missed
+//        DayHistory(
+//            date = today.minusDays(2),
+//            entries = listOf(
+//                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
+//                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.MISSED),
+//                MedicationHistoryEntry("medication 3", "20:00", HistoryStatus.TAKEN)
+//            ),
+//            allTaken = false
+//        ),
+//        // 3 DAYS AGO - all taken (should show "all medications" card)
+//        DayHistory(
+//            date = today.minusDays(3),
+//            entries = listOf(
+//                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.TAKEN),
+//                MedicationHistoryEntry("medication 2", "12:00", HistoryStatus.TAKEN)
+//            ),
+//            allTaken = true
+//        ),
+//        // 4 DAYS AGO - all missed (worst case scenario)
+//        DayHistory(
+//            date = today.minusDays(4),
+//            entries = listOf(
+//                MedicationHistoryEntry("vitamin C", "08:00", HistoryStatus.MISSED),
+//                MedicationHistoryEntry("omega-3", "14:00", HistoryStatus.MISSED),
+//                MedicationHistoryEntry("medication 3", "20:00", HistoryStatus.MISSED)
+//            ),
+//            allTaken = false
+//        )
+//    )
 
     // REAL IMPLEMENTATION - ucommenting after testing after testing
-    /*
+//    /*
     val today = LocalDate.now()
     val historyDays = mutableListOf<DayHistory>()
-    
+
     // generating history for last 30 days (or since user started)
     // for BACKEND: Get actual date range from user's join date
     for (daysAgo in 0..29) {
         val date = today.minusDays(daysAgo.toLong())
         val medsForDay = medications.filterForDate(date)
-        
+
         if (medsForDay.isNotEmpty()) {
             val entries = medsForDay.flatMap { med ->
                 med.reminderTimes.map { time ->
@@ -228,9 +227,9 @@ private fun generateHistoryFromMedications(medications: List<Medication>): List<
                     )
                 }
             }.sortedBy { it.scheduledTime }
-            
+
             val allTaken = entries.all { it.status == HistoryStatus.TAKEN }
-            
+
             historyDays.add(
                 DayHistory(
                     date = date,
@@ -240,9 +239,9 @@ private fun generateHistoryFromMedications(medications: List<Medication>): List<
             )
         }
     }
-    
+
     return historyDays
-    */
+//    */
 }
 
 // filtering meds for specific date (reusing logic from calendar screen)
@@ -299,8 +298,8 @@ fun StreakCard(currentStreak: Int) {
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .size(234.dp)
-                    .offset(x = 20.dp, y = (-5).dp)
+                    .size(275.dp)
+                    .offset(x = 20.dp, y = (10).dp)
             )
 
             Column(
@@ -313,6 +312,7 @@ fun StreakCard(currentStreak: Int) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(top = 12.dp)
                         .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -325,13 +325,15 @@ fun StreakCard(currentStreak: Int) {
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+//                Spacer(modifier = Modifier.height(1.dp))
+//                Spacer(modifier = Modifier.height((-80).dp))
 
                 // streak banner
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp)
+                        .offset(y = (-25).dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -344,6 +346,7 @@ fun StreakCard(currentStreak: Int) {
                         textAlign = TextAlign.Center
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
@@ -354,10 +357,10 @@ fun StreakCard(currentStreak: Int) {
 fun MedicationHistoryLog(historyData: List<DayHistory>) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(28.dp)
     ) {
         if (historyData.isEmpty()) {
-            // Empty state
+            // empty state
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -417,9 +420,9 @@ fun HistoryDateSection(dayHistory: DayHistory) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Show entries based on logic
+        // show entries based on logic
         if (dayHistory.allTaken && dayHistory.date != LocalDate.now()) {
-            // Show ONE "all medications" card for past days where everything was taken
+            // show one "all medications" card for past days where everything was taken
             HistoryEntryCard(
                 entry = MedicationHistoryEntry(
                     medicationName = "all medications taken",
@@ -429,7 +432,7 @@ fun HistoryDateSection(dayHistory: DayHistory) {
                 isAllMedicationsCard = true
             )
         } else {
-            // Show individual medication cards
+            // show individual history cards
             dayHistory.entries.forEach { entry ->
                 HistoryEntryCard(entry = entry, isAllMedicationsCard = false)
                 if (entry != dayHistory.entries.last()) {
@@ -456,10 +459,10 @@ fun HistoryEntryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp),
+            .border(1.dp, Color(0xFF7C8081), RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Row(
             modifier = Modifier
@@ -471,7 +474,7 @@ fun HistoryEntryCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Medication name with proper formatting
+                // med name with formatting
                 Text(
                     text = if (entry.scheduledTime.isNotEmpty()) {
                         "${entry.medicationName} — ${entry.scheduledTime}"
@@ -479,13 +482,13 @@ fun HistoryEntryCard(
                         entry.medicationName
                     },
                     fontSize = 18.sp,
-                    fontFamily = SFPro,
+                    fontFamily = Montserrat,
                     fontWeight = FontWeight.Normal,
                     color = Color.Black
                 )
             }
 
-            // Status badge with proper styling
+            // status badge with proper styling
             StatusBadge(status = entry.status, isAllMedicationsCard = isAllMedicationsCard)
         }
     }
@@ -516,9 +519,9 @@ fun StatusBadge(status: HistoryStatus, isAllMedicationsCard: Boolean) {
     ) {
         Text(
             text = text,
-            fontSize = 14.sp,
+            fontSize = 16.sp,
             fontFamily = Montserrat,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.Normal,
             color = Color.Black,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
         )
@@ -548,7 +551,7 @@ fun HistoryNavigationBar(
             onClick = onNavigateHome
         )
 
-        // history - selected
+        // history
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
