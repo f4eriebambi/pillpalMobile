@@ -68,15 +68,22 @@ class MainActivity : ComponentActivity() {
             PillPalMobileTheme {
                 MainApp()
             }
-
         }
     }
 }
 
 @Composable
 fun MainApp() {
-    val navController = androidx.navigation.compose.rememberNavController()
-    AppNavGraph(navController)
+    var showSplash by remember { mutableStateOf(true) }
+
+    if (showSplash) {
+        SplashScreen {
+            showSplash = false
+        }
+    } else {
+        val navController = rememberNavController()
+        AppNavGraph(navController)
+    }
 }
 
 
@@ -128,6 +135,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(25.dp)
+                .padding(bottom = 8.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -146,17 +154,18 @@ fun HomeScreen(
             MedicationSection(medications = DataSource.medications)
         }
 
+        // nav abr
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+//                .background(Color.White)
                 .padding(bottom = 20.dp)
         ) {
             NavigationBar()
         }
     }
 }
-
 
 @Composable
 fun GreetingSection(user: User) {
