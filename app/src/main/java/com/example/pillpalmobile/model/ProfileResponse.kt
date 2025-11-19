@@ -1,4 +1,8 @@
 package com.example.pillpalmobile.model
 
-class ProfileResponse {
-}
+data class ProfileResponse(
+    val user_id: Int,
+    val email: String,
+    val full_name: String?,
+    val birthday: String?
+)

@@ -8,9 +8,9 @@ object DataSource {
     // mock user details
     val user = User(
         name = "name",  // this will be user input but rn mock
-        nickname = "namechan",  // this will be user input but rn mock
+//        nickname = "namechan",  // this will be user input but rn mock
         birthday = "##/##/####", // this will be user input but rn mock
-        dateJoined = "29/10/2025", // this will be from database input but rn mock
+//        dateJoined = "29/10/2025", // this will be from database input but rn mock
         avatarRes = R.drawable.pfp
     )
     val medications = listOf(

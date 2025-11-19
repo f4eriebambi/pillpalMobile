@@ -1,4 +1,5 @@
 package com.example.pillpalmobile.model
 
-class LoginResponse {
-}
+data class LoginResponse(
+    val token: String
+)

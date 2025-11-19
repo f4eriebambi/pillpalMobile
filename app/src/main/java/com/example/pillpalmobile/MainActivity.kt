@@ -28,15 +28,18 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
+import com.example.pillpalmobile.navigation.AppNavGraph
 import com.example.pillpalmobile.screens.SettingsScreen
 import com.example.pillpalmobile.screens.WelcomeScreen
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
@@ -45,6 +48,11 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Locale
+import androidx.navigation.compose.rememberNavController
+import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.navigation.AppNavGraph
+import com.example.pillpalmobile.network.RetrofitClient
+import kotlinx.coroutines.launch
 
 
 // https://developer.android.com/develop/ui/views/text-and-emoji/fonts-in-xml
@@ -56,64 +64,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val navController = rememberNavController()
             PillPalMobileTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color.White
-                ) {
-                    MainApp()
-//                    HomeScreen()
-//                    WelcomeScreen(
-//                        onNavigateToLogin = { /* need to do login screen */ },
-//                        onNavigateToSignUp = { /* need to do signup screen */ }
-//                    )
-//                    LoginScreen(
-//                        onNavigateToSignUp = { /* */ },
-//                        onNavigateToHome = { /* */ },
-//                        onForgotPassword = { /* */ }
-//                    )
-                }
+                MainApp()
             }
+
         }
     }
 }
 
 @Composable
 fun MainApp() {
-    var showSplash by remember { mutableStateOf(true) }
-
-    if (showSplash) {
-        SplashScreen {
-            showSplash = false
-        }
-    } else {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = Color.White
-        ) {
-//            SplashScreen (
-//                onLoadingComplete = {
-//                    showSplash = false
-//                }
-//            )
-//            HomeScreen()
-            SettingsScreen()
-//            WelcomeScreen(
-//                onNavigateToLogin = { },
-//                onNavigateToSignUp = { },
-//            )
-//            LoginScreen(
-//                onNavigateToSignUp = { /* */ },
-//                onNavigateToHome = { /* */ },
-//                onForgotPassword = { /* */ }
-//            )
-//            CreateAccountScreen(
-//                onNavigateToLogin = { /* */ },
-//                onAccountCreated = { /* */ }
-//            )
-        }
-    }
+    val navController = androidx.navigation.compose.rememberNavController()
+    AppNavGraph(navController)
 }
+
 
 @Composable
 fun SplashScreen(onLoadingComplete: () -> Unit) {
@@ -151,7 +116,10 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    user: User,
+    onLogout: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -160,11 +128,10 @@ fun HomeScreen() {
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(25.dp)
-                .padding(bottom = 8.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            GreetingSection(user = DataSource.user)
+            GreetingSection(user = user)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -172,25 +139,24 @@ fun HomeScreen() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            ProfileCard(user = DataSource.user)
+            ProfileCard(user = user)
 
             Spacer(modifier = Modifier.height(28.dp))
 
             MedicationSection(medications = DataSource.medications)
         }
 
-        // nav abr
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-//                .background(Color.White)
                 .padding(bottom = 20.dp)
         ) {
             NavigationBar()
         }
     }
 }
+
 
 @Composable
 fun GreetingSection(user: User) {
