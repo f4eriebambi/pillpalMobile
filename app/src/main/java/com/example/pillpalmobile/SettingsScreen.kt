@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillpalmobile.Inter
 import com.example.pillpalmobile.Montserrat
-import com.example.pillpalmobile.NavigationBar
+//import com.example.pillpalmobile.NavigationBar
 import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
@@ -154,7 +154,7 @@ fun SettingsScreen(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         ) {
-            NavigationBar()
+            //NavigationBar()
         }
 
         if (showLogoutDialog) {
@@ -354,69 +354,69 @@ fun LogoutButtons(
 }
 
 @Composable
-    fun ConfirmationDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit
-    ) {
-        Dialog(onDismissRequest = onDismiss) {
-            Box(
-                modifier = Modifier
-                    .width(300.dp)
-                    .background(
-                        color = Color.White.copy(alpha = 0.9f),
-                        shape = RoundedCornerShape(28.dp)
-                    )
-                    .shadow(12.dp, RoundedCornerShape(28.dp))
-                    .padding(vertical = 24.dp, horizontal = 20.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun ConfirmationDialog(
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(300.dp)
+                .background(
+                    color = Color.White.copy(alpha = 0.9f),
+                    shape = RoundedCornerShape(28.dp)
+                )
+                .shadow(12.dp, RoundedCornerShape(28.dp))
+                .padding(vertical = 24.dp, horizontal = 20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                    Text(
-                        text = title,
-                        fontFamily = Montserrat,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = Color.Black
-                    )
+                Text(
+                    text = title,
+                    fontFamily = Montserrat,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color.Black
+                )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = message,
-                        fontFamily = Inter,
-                        fontSize = 16.sp,
-                        color = Color.Black
-                    )
+                Text(
+                    text = message,
+                    fontFamily = Inter,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
 
-                    Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(22.dp))
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                        OutlinedButton(
-                            onClick = {
-                                onConfirm()
-                                onDismiss()
-                            },
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Text("OK", fontFamily = Montserrat, fontSize = 18.sp)
-                        }
+                    OutlinedButton(
+                        onClick = {
+                            onConfirm()
+                            onDismiss()
+                        },
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("OK", fontFamily = Montserrat, fontSize = 18.sp)
+                    }
 
-                        Button(
-                            onClick = onDismiss,
-                            colors = ButtonDefaults.outlinedButtonColors(Color.White),
-                            shape = RoundedCornerShape(14.dp),
-                            border = BorderStroke(1.dp, Color.DarkGray)
-                        ) {
-                            Text("Cancel", fontFamily = Montserrat, fontSize = 18.sp)
-                        }
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.outlinedButtonColors(Color.White),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, Color.DarkGray)
+                    ) {
+                        Text("Cancel", fontFamily = Montserrat, fontSize = 18.sp)
                     }
                 }
             }
         }
+    }
 
 }
 
