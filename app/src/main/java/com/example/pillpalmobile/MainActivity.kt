@@ -50,6 +50,8 @@ import java.time.temporal.WeekFields
 import java.util.Locale
 import androidx.navigation.compose.rememberNavController
 import com.example.pillpalmobile.data.AuthStore
+//import com.example.pillpalmobile.data.DataSource.medications
+import com.example.pillpalmobile.model.MedicationResponse
 import com.example.pillpalmobile.navigation.AppNavGraph
 import com.example.pillpalmobile.network.RetrofitClient
 import kotlinx.coroutines.launch
@@ -125,6 +127,9 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
 @Composable
 fun HomeScreen(
     user: User,
+    medications: List<MedicationResponse>,
+    isMedicationLoading: Boolean,
+    navController: NavHostController,
     onLogout: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
@@ -151,7 +156,19 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            MedicationSection(medications = DataSource.medications)
+            if (isMedicationLoading) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                MedicationSectionFromNetwork(
+                    medications = medications,
+                    navController = navController
+                )
+            }
         }
 
         // nav abr
@@ -392,7 +409,10 @@ fun ProfileField(label: String, value: String) {
 }
 
 @Composable
-fun MedicationSection(medications: List<Medication>) {
+fun MedicationSection(
+    medications: List<Medication>,
+    navController: NavHostController
+) {
     val currentDate = LocalDate.now()
     val weekFields = WeekFields.of(Locale.getDefault())
     val weekNumber = currentDate.get(weekFields.weekOfWeekBasedYear())
@@ -452,23 +472,104 @@ fun MedicationSection(medications: List<Medication>) {
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    medications.forEach { medication ->
-                        MedicationItem(medication = medication)
-                        if (medication != medications.last()) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
-                                    .padding(top = 8.dp),
-                                thickness = 0.5.dp,
-                                color = Color(0xFF918C84)
-                            )
-                        }
+                    val paddedList = medications + List(maxOf(0, 6 - medications.size)) {
+                        Medication(
+                            id = -1,
+                            name = "Medication",
+                            reminderTimes = listOf(""),
+                            medicationDate = "",
+                            repeatEnabled = false
+                        )
                     }
+
+                    paddedList.forEach { med ->
+                        MedicationRowUnified(
+                            name = med.name,
+                            isPlaceholder = (med.id == -1),
+                            onClick = {
+                                if (med.id != -1) {
+                                    navController.navigate("edit_med/${med.id}")
+                                }
+                            }
+                        )
+                    }
+
+
+
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
         }
+    }
+}
+
+//@Composable
+//fun PlaceholderMedicationCard() {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(horizontal = 16.dp, vertical = 8.dp),
+//        horizontalArrangement = Arrangement.SpaceBetween
+//    ) {
+//        Text("Medication", fontSize = 20.sp, color = Color.Gray)
+//        Text(">", fontSize = 20.sp, color = Color.Gray)
+//    }
+//}
+
+
+
+@Composable
+fun MedicationSectionFromNetwork(
+    medications: List<MedicationResponse>,
+    navController: NavHostController
+) {
+    val mappedMeds = medications.map { med ->
+
+        val schedule = med.schedule
+
+        Medication(
+            id = med.med_id,
+            name = med.name,
+            reminderTimes = schedule?.times ?: emptyList(),
+            medicationDate = med.active_start_date ?: "",
+            repeatEnabled = schedule?.repeat_type != null,
+            repeatFrequency = when (schedule?.repeat_type) {
+                "daily" -> "Daily"
+                "weekly" -> "Weekly"
+                "custom" -> "Custom"
+                else -> "Daily"
+            },
+            repeatDays = decodeDayMask(schedule?.day_mask),
+            repeatStartDate = schedule?.custom_start.toEpochMillis(),
+            repeatEndDate = schedule?.custom_end.toEpochMillis(),
+            notes = med.notes ?: ""
+        )
+    }
+
+    MedicationSection(
+        medications = mappedMeds,
+        navController = navController
+    )
+}
+
+fun String?.toEpochMillis(): Long? {
+    if (this.isNullOrBlank()) return null
+
+    return try {
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val localDate = java.time.LocalDate.parse(this, formatter)
+        localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun decodeDayMask(mask: String?): List<String> {
+    if (mask.isNullOrEmpty()) return emptyList()
+
+    val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    return mask.mapIndexedNotNull { index, c ->
+        if (c == '1') days[index] else null
     }
 }
 
@@ -503,6 +604,40 @@ fun MedicationItem(medication: Medication) {
         )
     }
 }
+
+@Composable
+fun MedicationRowUnified(
+    name: String,
+    isPlaceholder: Boolean,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isPlaceholder) { onClick?.invoke() }
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Text(
+            text = name,
+            fontSize = 22.sp,
+            fontFamily = PixelifySans,
+            fontWeight = if (isPlaceholder) FontWeight.Light else FontWeight.Normal,
+            color = if (isPlaceholder) Color.Gray else Color.Black,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center
+        )
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = if (isPlaceholder) Color.Gray else Color.Black,
+            modifier = Modifier.size(32.dp)
+        )
+    }
+}
+
 
 @Composable
 fun NavigationBar() {
@@ -611,3 +746,4 @@ fun NavigationButton(iconRes: Int, label: String, modifier: Modifier) {
         }
     }
 }
+

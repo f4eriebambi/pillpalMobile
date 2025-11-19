@@ -16,6 +16,8 @@ import com.example.pillpalmobile.model.User
 import com.example.pillpalmobile.network.RetrofitClient
 import kotlinx.coroutines.launch
 import com.example.pillpalmobile.R
+import com.example.pillpalmobile.model.MedicationResponse
+import com.example.pillpalmobile.model.Medication
 
 
 @Composable
@@ -56,8 +58,13 @@ fun AppNavGraph(navController: NavHostController) {
             }
             composable("home") {
                 var user by remember { mutableStateOf<User?>(null) }
-                val context = LocalContext.current
+                var medications by remember { mutableStateOf<List<MedicationResponse>>(emptyList()) }
+                var isMedLoading by remember { mutableStateOf(true) }
 
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+
+                // ------------ LOAD USER PROFILE (UNCHANGED) ------------
                 LaunchedEffect(Unit) {
                     try {
                         val token = AuthStore.getToken(context)
@@ -67,7 +74,6 @@ fun AppNavGraph(navController: NavHostController) {
 
                         if (response.isSuccessful) {
                             val data = response.body()
-
                             if (data != null) {
 
                                 val firstName = data.full_name
@@ -76,7 +82,6 @@ fun AppNavGraph(navController: NavHostController) {
                                     ?.ifBlank { "User" }
                                     ?: "User"
 
-                                // FORMAT BIRTHDAY → dd/MM/yy
                                 val formattedBirthday = try {
                                     val inputFormats = listOf(
                                         "yyyy-MM-dd",
@@ -104,8 +109,7 @@ fun AppNavGraph(navController: NavHostController) {
                                         }
                                     }
 
-                                    if (parsed != null) outputFormat.format(parsed) else data.birthday
-                                        ?: "N/A"
+                                    if (parsed != null) outputFormat.format(parsed) else data.birthday ?: "N/A"
                                 } catch (_: Exception) {
                                     data.birthday ?: "N/A"
                                 }
@@ -116,18 +120,33 @@ fun AppNavGraph(navController: NavHostController) {
                                     avatarRes = R.drawable.pfp
                                 )
                             }
-
                         }
 
                     } catch (_: Exception) {
                     }
                 }
 
-                val scope = rememberCoroutineScope()
+                // ------------ LOAD MEDICATIONS (NEW PART) ------------
+                LaunchedEffect(Unit) {
+                    try {
+                        val token = AuthStore.getToken(context)
+                        if (token != null) {
+                            medications = RetrofitClient.medicationService
+                                .getMedications("Bearer $token")
+                        }
+                    } catch (e: Exception) {
+                        println("Error fetching meds: $e")
+                    }
+                    isMedLoading = false
+                }
 
+                // ------------ UI ------------
                 if (user != null) {
                     HomeScreen(
                         user = user!!,
+                        medications = medications,
+                        isMedicationLoading = isMedLoading,
+                        navController = navController,
                         onLogout = {
                             scope.launch {
                                 AuthStore.clearToken(context)
@@ -146,6 +165,74 @@ fun AppNavGraph(navController: NavHostController) {
                     }
                 }
             }
+
+            composable("edit_med/{medId}") { backStackEntry ->
+                val medId = backStackEntry.arguments?.getString("medId")?.toIntOrNull()
+                val context = LocalContext.current
+                var medication by remember { mutableStateOf<Medication?>(null) }
+                var isLoading by remember { mutableStateOf(true) }
+
+                // LOAD MEDICATION BY ID
+                LaunchedEffect(medId) {
+                    if (medId != null) {
+                        try {
+                            val token = AuthStore.getToken(context)
+                            if (token != null) {
+                                val response = RetrofitClient.medicationService.getMedicationById(
+                                    "Bearer $token",
+                                    medId
+                                )
+
+                                medication = Medication(
+                                    id = response.med_id,
+                                    name = response.name,
+                                    reminderTimes = response.schedule?.times ?: emptyList(),
+                                    medicationDate = response.active_start_date ?: "",
+                                    repeatEnabled = response.schedule?.repeat_type != null,
+                                    repeatFrequency = when (response.schedule?.repeat_type) {
+                                        "daily" -> "Daily"
+                                        "weekly" -> "Weekly"
+                                        "custom" -> "Custom"
+                                        else -> "Daily"
+                                    },
+                                    repeatDays = decodeDayMask(response.schedule?.day_mask),
+                                    repeatStartDate = response.schedule?.custom_start.toEpochMillis(),
+                                    repeatEndDate = response.schedule?.custom_end.toEpochMillis(),
+                                    notes = response.notes ?: ""
+                                )
+                            }
+                        } catch (e: Exception) {
+                            println("Error loading med: $e")
+                        }
+                    }
+
+                    isLoading = false
+                }
+
+                if (isLoading) {
+                    Box(
+                        Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    EditMedicationScreen(
+                        medication = medication,
+                        onNavigateBack = { navController.popBackStack() },
+                        onDelete = { id ->
+                            // TODO delete endpoint
+                            navController.popBackStack()
+                        },
+                        onSave = { updatedMed ->
+                            // TODO save API
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+
+
 
         }
     }

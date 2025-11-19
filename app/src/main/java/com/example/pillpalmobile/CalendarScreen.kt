@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pillpalmobile.model.Medication
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -30,6 +29,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
 import java.util.Locale
+import com.example.pillpalmobile.model.Medication
+
 
 
 // https://www.youtube.com/watch?v=vL_3r9tz1gM
