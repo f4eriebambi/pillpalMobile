@@ -15,25 +15,34 @@ import com.example.pillpalmobile.LoginScreen
 import com.example.pillpalmobile.data.ApiClient
 import com.example.pillpalmobile.data.ApiService
 import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.data.UserRepository
 import com.example.pillpalmobile.model.MedicationResponse
 import com.example.pillpalmobile.model.UserUI
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
+
     var startDestination by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         startDestination = if (AuthStore.currentUser != null) "home" else "login"
     }
 
-    val api = remember { ApiClient.instance.create(ApiService::class.java) }
-
     if (startDestination != null) {
         NavHost(
             navController = navController,
             startDestination = startDestination!!
         ) {
+
+            // ---------------------------------------------------------
+            // LOGIN SCREEN
+            // ---------------------------------------------------------
             composable("login") {
+
+                // Create API + Repository for LoginScreen
+                val api = ApiClient.instance.create(ApiService::class.java)
+                val repo = UserRepository(api)
+
                 LoginScreen(
                     onNavigateToSignUp = { navController.navigate("signup") },
                     onNavigateToHome = {
@@ -41,10 +50,13 @@ fun AppNavGraph(navController: NavHostController) {
                             popUpTo("login") { inclusive = true }
                         }
                     },
-                    onForgotPassword = { /* TODO */ }
+                    repo = repo
                 )
             }
 
+            // ---------------------------------------------------------
+            // SIGNUP SCREEN
+            // ---------------------------------------------------------
             composable("signup") {
                 CreateAccountScreen(
                     onAccountCreated = {
@@ -60,7 +72,12 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
 
+            // ---------------------------------------------------------
+            // HOME SCREEN
+            // ---------------------------------------------------------
             composable("home") {
+
+                val api = ApiClient.instance.create(ApiService::class.java)
                 val backendUser = AuthStore.currentUser
 
                 var uiUser by remember { mutableStateOf<UserUI?>(null) }
@@ -68,52 +85,51 @@ fun AppNavGraph(navController: NavHostController) {
                 var isMedsLoading by remember { mutableStateOf(true) }
 
                 LaunchedEffect(backendUser?.user_id) {
+
                     val u = backendUser ?: run {
                         isMedsLoading = false
                         return@LaunchedEffect
                     }
 
-                    // nombre + cumpleaños ficticio (no viene en el LoginResponse)
+                    // FIX: full_name safe call
                     val firstName = u.full_name
-                        .split(" ")
-                        .firstOrNull()
+                        ?.split(" ")
+                        ?.firstOrNull()
                         ?.ifBlank { "User" }
                         ?: "User"
 
                     uiUser = UserUI(
                         name = firstName,
-                        birthday = "05/11/1970" // placeholder hasta que tengas birth_date real
+                        birthday = "05/11/1970" // placeholder until backend birth_date exists
                     )
 
                     isMedsLoading = true
 
+                    // FIX: user_id is Int? → must convert to Int
                     val response = try {
-                        api.getMedications(u.user_id)
+                        api.getMedications(u.user_id ?: 0)
                     } catch (e: Exception) {
                         isMedsLoading = false
                         meds = emptyList()
                         return@LaunchedEffect
                     }
 
-                    if (response.isSuccessful) {
-                        meds = response.body() ?: emptyList()
-                    } else {
-                        meds = emptyList()
-                    }
+                    meds = if (response.isSuccessful) {
+                        response.body() ?: emptyList()
+                    } else emptyList()
 
                     isMedsLoading = false
                 }
 
                 val userUiLocal = uiUser
+
                 if (userUiLocal != null) {
                     HomeScreen(
                         user = userUiLocal,
                         medications = meds,
                         isMedicationLoading = isMedsLoading,
                         navController = navController,
-                        onLogout = {
-                            // si quieres implementar logout más tarde
-                        }
+                        onLogout = {}
                     )
                 } else {
                     Box(
