@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.pillpalmobile.R
 import com.example.pillpalmobile.model.Notification
 import com.example.pillpalmobile.model.NotificationType
@@ -32,7 +33,7 @@ val initialNotifications = listOf(
 // --- Main Components ---
 
 @Composable
-fun NotificationScreen() {
+fun NotificationScreen(navController: NavController? = null) {
     var notifications by remember { mutableStateOf(initialNotifications) }
 
     Box(
@@ -72,25 +73,28 @@ fun NotificationScreen() {
         ) {
             // Use the bordered notification cards
             if (notifications.isEmpty()) {
-                EmptyState()
+                EmptyState(navController = navController)
             } else {
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    NotificationCardsWithBorders()
+                    NotificationCardsWithBorders(navController = navController) // Added navController parameter
                 }
             }
 
             // Clear All Button - ensure it's visible
-            ClearAllButton(onClear = { notifications = emptyList() })
+            ClearAllButton(
+                onClear = { notifications = emptyList() },
+                navController = navController
+            )
         }
     }
 }
 
 @Composable
-fun EmptyState() {
+fun EmptyState(navController: NavController? = null) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -107,16 +111,33 @@ fun EmptyState() {
             style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
             color = Color.Gray
         )
+
+        // Optional: Add navigation button when empty
+        Spacer(modifier = Modifier.height(20.dp))
+        Button(
+            onClick = {
+                navController?.navigate("add")
+            },
+            modifier = Modifier
+                .padding(horizontal = 50.dp)
+                .height(48.dp)
+        ) {
+            Text("Add Medication", fontSize = 16.sp)
+        }
     }
 }
 
 @Composable
-fun ClearAllButton(onClear: () -> Unit) {
+fun ClearAllButton(onClear: () -> Unit, navController: NavController? = null) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp, horizontal = 16.dp)
-            .clickable { onClear() },
+            .clickable {
+                onClear()
+                // Optional: Navigate after clearing
+                // navController?.navigate("home")
+            },
         contentAlignment = Alignment.Center
     ) {
         Image(

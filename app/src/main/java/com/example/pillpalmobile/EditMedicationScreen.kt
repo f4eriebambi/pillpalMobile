@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,18 +25,15 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.pillpalmobile.model.Medication
 import java.text.SimpleDateFormat
 import java.util.*
 
-// https://developer.android.com/develop/ui/compose/components/time-pickers
-// https://developer.android.com/develop/ui/compose/components/time-pickers-dialogs#:~:text=The%20AdvancedTimePickerExample%20composable%20creates%20a,between%20dial%20and%20input%20modes.
-// https://www.youtube.com/watch?v=Ndp6RyDwPYs
-// https://developer.android.com/reference/kotlin/androidx/compose/runtime/package-summary#mutableStateListOf()
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditMedicationScreen(
+    navController: NavController? = null,
     medication: Medication? = null,
     onNavigateBack: () -> Unit = {},
     onDelete: (Int) -> Unit = {},
@@ -229,7 +225,8 @@ fun EditMedicationScreen(
                 name = name,
                 onNameChange = { name = it },
                 onCancelClick = { showCancelDialog = true },
-                onDeleteClick = { showDeleteMedicationDialog = true }
+                onDeleteClick = { showDeleteMedicationDialog = true },
+                navController = navController
             )
         }
 
@@ -252,8 +249,8 @@ fun EditMedicationScreen(
             onDismiss = { showCancelDialog = false },
             onConfirm = {
                 showCancelDialog = false
-                // navigate back to home screen
-                // onNavigateBack()
+                // navigate back using navController
+                navController?.popBackStack()
             }
         )
 
@@ -263,6 +260,8 @@ fun EditMedicationScreen(
             onConfirm = {
                 showDeleteMedicationDialog = false
                 onDelete(medicationId)
+                // Navigate back after deletion
+                navController?.popBackStack()
             }
         )
 
@@ -318,8 +317,8 @@ fun EditMedicationScreen(
             onDismiss = { showSaveSuccessDialog = false },
             onConfirm = {
                 showSaveSuccessDialog = false
-                // navigate back to home
-                // onNavigateBack()
+                // navigate back using navController
+                navController?.popBackStack()
             }
         )
     }
@@ -331,7 +330,8 @@ fun HeaderSection(
     name: String,
     onNameChange: (String) -> Unit,
     onCancelClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    navController: NavController? = null
 ) {
     Column(
         modifier = Modifier
@@ -349,7 +349,14 @@ fun HeaderSection(
 
         // cancel button
         Surface(
-            onClick = onCancelClick,
+            onClick = {
+                // Use navController for navigation if available, otherwise fallback
+                if (navController != null) {
+                    navController.popBackStack()
+                } else {
+                    onCancelClick()
+                }
+            },
             shape = RoundedCornerShape(20.dp),
             color = Color.White,
             shadowElevation = 6.dp,
@@ -358,7 +365,7 @@ fun HeaderSection(
             Text(
                 text = "Cancel",
                 fontSize = 19.sp,
-                fontFamily = SFPro,
+                fontFamily = SFProFont,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xff333333),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -393,7 +400,7 @@ fun HeaderSection(
                     value = name,
                     onValueChange = onNameChange,
                     textStyle = LocalTextStyle.current.copy(
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Normal,
                         fontSize = 28.sp,
                         textAlign = TextAlign.Center,
@@ -414,7 +421,7 @@ fun HeaderSection(
                     placeholder = {
                         Text(
                             text = "medication name",
-                            fontFamily = SFPro,
+                            fontFamily = SFProFont,
                             fontWeight = FontWeight.Normal,
                             fontSize = 28.sp,
                             textAlign = TextAlign.Center,
@@ -450,7 +457,7 @@ fun TimePickerSection(
     Text(
         text = "Edit Reminder Time",
         fontSize = 23.sp,
-        fontFamily = SFPro,
+        fontFamily = SFProFont,
         fontWeight = FontWeight.Medium,
         color = Color.Black,
         modifier = Modifier
@@ -486,7 +493,7 @@ fun TimePickerSection(
                     text = if (times.isNotEmpty() && activeTimeIndex < times.size)
                         times[activeTimeIndex] else "Select Time",
                     fontSize = 32.sp,
-                    fontFamily = Inter,
+                    fontFamily = InterFont,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black,
                     modifier = Modifier.padding(vertical = 12.dp)
@@ -495,7 +502,7 @@ fun TimePickerSection(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // lsit of times
+            // list of times
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -523,7 +530,7 @@ fun TimePickerSection(
                         Text(
                             text = time,
                             fontSize = 18.sp,
-                            fontFamily = Inter,
+                            fontFamily = InterFont,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.Black,
                             modifier = Modifier.weight(1f)
@@ -571,7 +578,7 @@ fun TimePickerSection(
                 Text(
                     text = "+ Add Time",
                     fontSize = 18.sp,
-                    fontFamily = Montserrat,
+                    fontFamily = MontserratFont,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -582,7 +589,7 @@ fun TimePickerSection(
             Text(
                 text = "You can add up to 4 reminder times.",
                 fontSize = 16.sp,
-                fontFamily = SFPro,
+                fontFamily = SFProFont,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFFA1A1A1),
                 modifier = Modifier.fillMaxWidth(),
@@ -617,7 +624,7 @@ fun TimePickerModal(
                 ) {
                     Text(
                         text = "OK",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFFACBD6F),
                         fontSize = 20.sp,
@@ -629,7 +636,7 @@ fun TimePickerModal(
                 TextButton(onClick = onDismiss) {
                     Text(
                         text = "Cancel",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF595880),
                         fontSize = 20.sp
@@ -646,7 +653,7 @@ fun TimePickerModal(
                     Text(
                         text = "Select Time",
                         fontSize = 20.sp,
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF595880),
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -684,7 +691,7 @@ fun RepeatSection(
     Text(
         text = "Repeat",
         fontSize = 23.sp,
-        fontFamily = SFPro,
+        fontFamily = SFProFont,
         fontWeight = FontWeight.Medium,
         color = Color.Black,
         modifier = Modifier
@@ -713,7 +720,7 @@ fun RepeatSection(
                 Text(
                     text = "Repeat",
                     fontSize = 20.sp,
-                    fontFamily = SFPro,
+                    fontFamily = SFProFont,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black
                 )
@@ -743,7 +750,7 @@ fun RepeatSection(
                     Text(
                         text = "How Often",
                         fontSize = 20.sp,
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         color = Color.Black
                     )
@@ -763,7 +770,7 @@ fun RepeatSection(
                             Text(
                                 text = howOften,
                                 fontSize = 19.sp,
-                                fontFamily = SFPro,
+                                fontFamily = SFProFont,
                                 fontWeight = FontWeight.Medium,
                                 color = Color.Black
                             )
@@ -771,7 +778,7 @@ fun RepeatSection(
                                 text = " ⇅",
                                 style = TextStyle(
                                     fontSize = 28.sp,
-                                    fontFamily = SFPro,
+                                    fontFamily = SFProFont,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.Black,
                                     baselineShift = BaselineShift(0.2f)
@@ -790,7 +797,7 @@ fun RepeatSection(
                                         Text(
                                             option,
                                             fontSize = 17.sp,
-                                            fontFamily = SFPro,
+                                            fontFamily = SFProFont,
                                             fontWeight = FontWeight.Medium
                                         )
                                     },
@@ -809,7 +816,7 @@ fun RepeatSection(
                         Text(
                             text = "Which Day(s)",
                             fontSize = 18.sp,
-                            fontFamily = SFPro,
+                            fontFamily = SFProFont,
                             fontWeight = FontWeight.Medium,
                             color = Color.Black
                         )
@@ -838,7 +845,7 @@ fun RepeatSection(
                                 ) {
                                     Text(
                                         day,
-                                        fontFamily = SFPro,
+                                        fontFamily = SFProFont,
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 18.sp,
                                         color = Color.Black
@@ -862,7 +869,7 @@ fun RepeatSection(
                         Text(
                             text = "Start Date",
                             fontSize = 18.sp,
-                            fontFamily = SFPro,
+                            fontFamily = SFProFont,
                             fontWeight = FontWeight.Medium,
                             color = Color.Black
                         )
@@ -878,7 +885,7 @@ fun RepeatSection(
                             Text(
                                 text = startDate,
                                 fontSize = 18.sp,
-                                fontFamily = SFPro,
+                                fontFamily = SFProFont,
                                 fontWeight = FontWeight.Normal,
                                 color = Color.Black
                             )
@@ -896,7 +903,7 @@ fun RepeatSection(
                         Text(
                             text = "End Date",
                             fontSize = 18.sp,
-                            fontFamily = SFPro,
+                            fontFamily = SFProFont,
                             fontWeight = FontWeight.Medium,
                             color = Color.Black
                         )
@@ -912,7 +919,7 @@ fun RepeatSection(
                             Text(
                                 text = endDate,
                                 fontSize = 18.sp,
-                                fontFamily = SFPro,
+                                fontFamily = SFProFont,
                                 fontWeight = FontWeight.Normal,
                                 color = Color.Black
                             )
@@ -927,7 +934,7 @@ fun RepeatSection(
                         Text(
                             text = "Start date cannot be after end date.",
                             color = Color.Red,
-                            fontFamily = SFPro,
+                            fontFamily = SFProFont,
                             fontWeight = FontWeight.Medium,
                             fontSize = 16.sp
                         )
@@ -965,7 +972,7 @@ fun CustomDatePickers(
                 ) {
                     Text(
                         "OK",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         color = Color(0xFFACBD6F)
@@ -976,7 +983,7 @@ fun CustomDatePickers(
                 TextButton(onClick = onDismissStartDatePicker) {
                     Text(
                         "Cancel",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         color = Color(0xFF595880)
@@ -1002,7 +1009,7 @@ fun CustomDatePickers(
                 ) {
                     Text(
                         "OK",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         color = Color(0xFFACBD6F)
@@ -1013,7 +1020,7 @@ fun CustomDatePickers(
                 TextButton(onClick = onDismissEndDatePicker) {
                     Text(
                         "Cancel",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         color = Color(0xFF595880)
@@ -1035,7 +1042,7 @@ fun DateSection(
     Text(
         text = "Date",
         fontSize = 23.sp,
-        fontFamily = SFPro,
+        fontFamily = SFProFont,
         fontWeight = FontWeight.Medium,
         color = Color.Black,
         modifier = Modifier
@@ -1062,7 +1069,7 @@ fun DateSection(
             Text(
                 text = medicationDate,
                 fontSize = 20.sp,
-                fontFamily = SFPro,
+                fontFamily = SFProFont,
                 fontWeight = FontWeight.Normal,
                 color = Color.Black
             )
@@ -1093,7 +1100,7 @@ fun DatePickerModal(
                 TextButton(onClick = onConfirm) {
                     Text(
                         "OK",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         color = Color(0xFFACBD6F)
@@ -1104,7 +1111,7 @@ fun DatePickerModal(
                 TextButton(onClick = onDismiss) {
                     Text(
                         "Cancel",
-                        fontFamily = SFPro,
+                        fontFamily = SFProFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         color = Color(0xFF595880)
@@ -1126,7 +1133,7 @@ fun NotesSection(
     Text(
         text = "Notes (Optional)",
         fontSize = 23.sp,
-        fontFamily = SFPro,
+        fontFamily = SFProFont,
         fontWeight = FontWeight.Medium,
         color = Color.Black,
         modifier = Modifier
@@ -1150,7 +1157,7 @@ fun NotesSection(
                 Text(
                     text = "(e.g. \"Take with water\", \"Don't take with dairy\", etc.)",
                     fontSize = 18.sp,
-                    fontFamily = SFPro,
+                    fontFamily = SFProFont,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFFA1A1A1)
                 )
@@ -1166,7 +1173,7 @@ fun NotesSection(
             ),
             textStyle = TextStyle(
                 fontSize = 18.sp,
-                fontFamily = SFPro,
+                fontFamily = SFProFont,
                 fontWeight = FontWeight.Normal,
                 color = Color.Black
             )
@@ -1196,7 +1203,7 @@ fun SaveButton(
         Text(
             text = "Save",
             fontSize = 24.sp,
-            fontFamily = Montserrat,
+            fontFamily = MontserratFont,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFFF16F33)
         )
@@ -1232,7 +1239,7 @@ fun CancelDialog(
                     ) {
                         Text(
                             text = "yes",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1250,7 +1257,7 @@ fun CancelDialog(
                     ) {
                         Text(
                             text = "cancel",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1266,7 +1273,7 @@ fun CancelDialog(
                 ) {
                     Text(
                         text = "Discard changes?",
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
                         fontSize = 22.sp,
@@ -1284,7 +1291,7 @@ fun CancelDialog(
                     Text(
                         text = "Are you sure you want to leave without \nsaving?",
                         textAlign = TextAlign.Center,
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp,
                         modifier = Modifier.fillMaxWidth()
@@ -1324,7 +1331,7 @@ fun DeleteMedicationDialog(
                     ) {
                         Text(
                             text = "yes",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1342,7 +1349,7 @@ fun DeleteMedicationDialog(
                     ) {
                         Text(
                             text = "cancel",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1358,7 +1365,7 @@ fun DeleteMedicationDialog(
                 ) {
                     Text(
                         text = "Delete Medication?",
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
                         fontSize = 22.sp,
@@ -1376,7 +1383,7 @@ fun DeleteMedicationDialog(
                     Text(
                         text = "Are you sure you want to delete this\nmedication?",
                         textAlign = TextAlign.Center,
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp,
                         modifier = Modifier.fillMaxWidth()
@@ -1416,7 +1423,7 @@ fun RemoveTimeDialog(
                     ) {
                         Text(
                             text = "yes",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1434,7 +1441,7 @@ fun RemoveTimeDialog(
                     ) {
                         Text(
                             text = "cancel",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1450,7 +1457,7 @@ fun RemoveTimeDialog(
                 ) {
                     Text(
                         text = "Remove Time?",
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
                         fontSize = 22.sp,
@@ -1468,7 +1475,7 @@ fun RemoveTimeDialog(
                     Text(
                         text = "Are you sure you want to remove this\nreminder time?",
                         textAlign = TextAlign.Center,
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp,
                         modifier = Modifier.fillMaxWidth()
@@ -1504,7 +1511,7 @@ fun SaveConfirmDialog(
                     ) {
                         Text(
                             text = "yes",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1518,7 +1525,7 @@ fun SaveConfirmDialog(
                     ) {
                         Text(
                             text = "cancel",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1534,7 +1541,7 @@ fun SaveConfirmDialog(
                 ) {
                     Text(
                         text = "Save changes?",
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
                         fontSize = 22.sp,
@@ -1552,7 +1559,7 @@ fun SaveConfirmDialog(
                     Text(
                         text = "Are you sure you want to apply \nall changes to this medication?",
                         textAlign = TextAlign.Center,
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp,
                         modifier = Modifier.fillMaxWidth()
@@ -1588,7 +1595,7 @@ fun SaveSuccessDialog(
                     ) {
                         Text(
                             text = "ok",
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 20.sp
                         )
@@ -1604,7 +1611,7 @@ fun SaveSuccessDialog(
                 ) {
                     Text(
                         text = "Medication Updated!",
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 22.sp,
                         textAlign = TextAlign.Center
@@ -1621,7 +1628,7 @@ fun SaveSuccessDialog(
                     Text(
                         text = "Your changes have been\nsuccessfully saved.",
                         textAlign = TextAlign.Center,
-                        fontFamily = Montserrat,
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp
                     )

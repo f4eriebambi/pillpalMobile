@@ -26,16 +26,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-
-// https://medium.com/@emmanuelmuturia/how-to-mask-your-password-in-android-jetpack-compose-3a0deee6c15b
-
+import androidx.navigation.NavController
 
 @Composable
 fun LoginScreen(
-    onNavigateToSignUp: () -> Unit,
-    onNavigateToHome: () -> Unit,
-    onForgotPassword: () -> Unit
+    navController: NavController? = null,
+    onNavigateToSignUp: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onForgotPassword: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -53,7 +51,6 @@ fun LoginScreen(
                 .padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-//            Spacer(modifier = Modifier.height(48.dp))
             Spacer(modifier = Modifier.height(24.dp))
 
             Image(
@@ -194,7 +191,7 @@ fun LoginScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                 )
 
-                // forget password link (migth remove)
+                // forget password link (might remove)
                 Text(
                     text = "Forgot Password?",
                     textAlign = TextAlign.Left,
@@ -206,7 +203,14 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp)
-                        .clickable { onForgotPassword() }
+                        .clickable {
+                            if (navController != null) {
+                                // Navigate to forgot password screen if you have one
+                                // navController.navigate("forgot-password")
+                            } else {
+                                onForgotPassword()
+                            }
+                        }
                 )
             }
 
@@ -215,10 +219,19 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-//                    .padding(horizontal = 24.dp)
             ) {
                 Button(
-                    onClick = onNavigateToHome,
+                    onClick = {
+                        // Use navController for navigation if available, otherwise fallback to callback
+                        if (navController != null) {
+                            navController.navigate("home") {
+                                // Clear back stack so user can't go back to login
+                                popUpTo(0) { inclusive = true }
+                            }
+                        } else {
+                            onNavigateToHome()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -258,7 +271,14 @@ fun LoginScreen(
                     fontSize = 14.sp,
                     color = Color.Black,
                     textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable { onNavigateToSignUp() },
+                    modifier = Modifier.clickable {
+                        // Use navController for navigation if available, otherwise fallback to callback
+                        if (navController != null) {
+                            navController.navigate("create-account")
+                        } else {
+                            onNavigateToSignUp()
+                        }
+                    },
                     fontFamily = Inter,
                     fontWeight = FontWeight.Medium
                 )

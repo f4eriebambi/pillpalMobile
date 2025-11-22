@@ -16,13 +16,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pillpalmobile.Montserrat
+import androidx.navigation.NavController
+import com.example.pillpalmobile.MontserratFont
 import com.example.pillpalmobile.R
 
 @Composable
 fun WelcomeScreen(
-    onNavigateToLogin: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    navController: NavController? = null,
+    onNavigateToLogin: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -36,14 +38,32 @@ fun WelcomeScreen(
 
         Image(
             painter = painterResource(R.drawable.pillpal_welcome),
-            contentDescription = null,
+            contentDescription = "Welcome to PillPal",
             modifier = Modifier
                 .size(300.dp)
                 .padding(bottom = 1.dp)
         )
 
         Spacer(modifier = Modifier.height(64.dp))
-        Spacer(modifier = Modifier.height(72.dp))
+
+        // Welcome text
+        Text(
+            text = "Welcome to PillPal",
+            fontSize = 32.sp,
+            fontFamily = MontserratFont,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF595880),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = "Your personal medication manager",
+            fontSize = 16.sp,
+            fontFamily = MontserratFont,
+            fontWeight = FontWeight.Medium,
+            color = Color.Gray,
+            modifier = Modifier.padding(bottom = 72.dp)
+        )
 
         // sign in button
         Box(
@@ -52,7 +72,14 @@ fun WelcomeScreen(
                 .padding(horizontal = 22.dp)
         ) {
             Button(
-                onClick = onNavigateToLogin,
+                onClick = {
+                    // Use navController if available, otherwise fallback to callback
+                    if (navController != null) {
+                        navController.navigate("login")
+                    } else {
+                        onNavigateToLogin()
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
@@ -70,7 +97,7 @@ fun WelcomeScreen(
                     text = "Sign in",
                     fontSize = 24.sp,
                     color = Color(0xFF595880),
-                    fontFamily = Montserrat,
+                    fontFamily = MontserratFont,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -85,7 +112,14 @@ fun WelcomeScreen(
                 .padding(horizontal = 22.dp)
         ) {
             Button(
-                onClick = onNavigateToSignUp,
+                onClick = {
+                    // Use navController if available, otherwise fallback to callback
+                    if (navController != null) {
+                        navController.navigate("create-account")
+                    } else {
+                        onNavigateToSignUp()
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
@@ -103,11 +137,29 @@ fun WelcomeScreen(
                     text = "Create Account",
                     fontSize = 24.sp,
                     color = Color.White,
-                    fontFamily = Montserrat,
+                    fontFamily = MontserratFont,
                     fontWeight = FontWeight.SemiBold
-
                 )
             }
+        }
+
+        // Skip login for development (optional)
+        Spacer(modifier = Modifier.height(32.dp))
+        TextButton(
+            onClick = {
+                // Navigate directly to home screen (for testing)
+                navController?.navigate("home") {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        ) {
+            Text(
+                text = "Skip and go to app",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                fontFamily = MontserratFont,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

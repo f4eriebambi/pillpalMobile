@@ -28,23 +28,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.*
-
-
-// https://developer.android.com/develop/ui/views/components/pickers
-// https://www.geeksforgeeks.org/kotlin/datepicker-in-kotlin/
-// https://developer.android.com/develop/ui/views/components/dialogs
-// https://www.slingacademy.com/article/using-regex-to-validate-email-addresses-in-kotlin/
-// https://www.baeldung.com/kotlin/password-validation
-// https://www.youtube.com/watch?v=v8tBXEx08Ns
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAccountScreen(
-    onNavigateToLogin: () -> Unit,
-    onAccountCreated: (String) -> Unit
+    navController: NavController? = null,
+    onNavigateToLogin: () -> Unit = {},
+    onAccountCreated: (String) -> Unit = {} // This callback should handle navigation to home
 ) {
     val scrollState = rememberScrollState()
     var name by remember { mutableStateOf("") }
@@ -67,18 +60,24 @@ fun CreateAccountScreen(
     val isEmailValid = emailRegex.matcher(email).matches()
     val passwordRegex = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@\$!%*?&])[A-Za-z\\d@\$!%*?&]{8,}$")
     val isPasswordValid = passwordRegex.matches(password)
+
     fun calculateAge(birthday: String): Int {
-        val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        val birthDate = format.parse(birthday)
-        val today = Calendar.getInstance()
-        val dob = Calendar.getInstance().apply { time = birthDate }
-        var age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR)
-        if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) age--
-        return age
+        return try {
+            val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val birthDate = format.parse(birthday)
+            val today = Calendar.getInstance()
+            val dob = Calendar.getInstance().apply { time = birthDate ?: Date() }
+            var age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR)
+            if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) age--
+            age
+        } catch (e: Exception) {
+            0
+        }
     }
     val isOldEnough = birthday.isNotBlank() && calculateAge(birthday) >= 17
 
-
+    // Check if all fields are valid and ready for account creation
+    val isFormValid = isNameValid && isEmailValid && isPasswordValid && isOldEnough && confirmPassword == password
 
     Box(
         modifier = Modifier
@@ -89,7 +88,6 @@ fun CreateAccountScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-//                .verticalScroll(scrollState)
                 .padding(24.dp)
                 .padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -110,7 +108,7 @@ fun CreateAccountScreen(
             Text(
                 text = "Welcome to",
                 fontSize = 38.sp,
-                fontFamily = Montserrat,
+                fontFamily = MontserratFont,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
@@ -120,7 +118,7 @@ fun CreateAccountScreen(
             Text(
                 text = "PillPal",
                 fontSize = 38.sp,
-                fontFamily = Montserrat,
+                fontFamily = MontserratFont,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
             )
@@ -159,13 +157,12 @@ fun CreateAccountScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 22.dp)
-//                    .padding(vertical = 16.dp)
                     ) {
                         Text(
                             text = "* means required",
                             fontSize = 16.sp,
                             color = Color(0xFF4A4A4A),
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -176,7 +173,7 @@ fun CreateAccountScreen(
                         Text(
                             text = "Name *",
                             fontSize = 20.sp,
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -192,7 +189,7 @@ fun CreateAccountScreen(
                                     "Name",
                                     color = Color(0xFF828282),
                                     fontSize = 18.sp,
-                                    fontFamily = Montserrat,
+                                    fontFamily = MontserratFont,
                                     fontWeight = FontWeight.Normal
                                 )
                             },
@@ -207,7 +204,7 @@ fun CreateAccountScreen(
                             shape = RoundedCornerShape(15.dp),
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 18.sp,
-                                fontFamily = Montserrat,
+                                fontFamily = MontserratFont,
                                 fontWeight = FontWeight.Medium,
                                 color = if (name.isNotEmpty()) Color.Black else Color(0xFF828282)
                             ),
@@ -231,7 +228,7 @@ fun CreateAccountScreen(
                         Text(
                             text = "Email address *",
                             fontSize = 20.sp,
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -247,7 +244,7 @@ fun CreateAccountScreen(
                                     "Email address",
                                     color = Color(0xFF828282),
                                     fontSize = 18.sp,
-                                    fontFamily = Montserrat,
+                                    fontFamily = MontserratFont,
                                     fontWeight = FontWeight.Normal
                                 )
                             },
@@ -262,7 +259,7 @@ fun CreateAccountScreen(
                             shape = RoundedCornerShape(15.dp),
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 18.sp,
-                                fontFamily = Montserrat,
+                                fontFamily = MontserratFont,
                                 fontWeight = FontWeight.Medium,
                                 color = if (email.isNotEmpty()) Color.Black else Color(0xFF828282)
                             ),
@@ -287,7 +284,7 @@ fun CreateAccountScreen(
                         Text(
                             text = "Date of birth *",
                             fontSize = 20.sp,
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -304,7 +301,7 @@ fun CreateAccountScreen(
                                     "dd/mm/yyyy",
                                     color = Color(0xFF828282),
                                     fontSize = 18.sp,
-                                    fontFamily = Montserrat,
+                                    fontFamily = MontserratFont,
                                     fontWeight = FontWeight.Normal
                                 )
                             },
@@ -329,7 +326,7 @@ fun CreateAccountScreen(
                             shape = RoundedCornerShape(15.dp),
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 18.sp,
-                                fontFamily = Montserrat,
+                                fontFamily = MontserratFont,
                                 fontWeight = FontWeight.Medium,
                                 color = if (birthday.isNotEmpty()) Color.Black else Color(0xFF828282)
                             ),
@@ -383,7 +380,7 @@ fun CreateAccountScreen(
                         Text(
                             text = "Password *",
                             fontSize = 20.sp,
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -396,10 +393,10 @@ fun CreateAccountScreen(
                             isError = password.isNotBlank() && !isPasswordValid,
                             placeholder = {
                                 Text(
-                                    "Create a pasword",
+                                    "Create a password",
                                     color = Color(0xFF828282),
                                     fontSize = 18.sp,
-                                    fontFamily = Montserrat,
+                                    fontFamily = MontserratFont,
                                     fontWeight = FontWeight.Normal
                                 )
                             },
@@ -414,7 +411,7 @@ fun CreateAccountScreen(
                             shape = RoundedCornerShape(15.dp),
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 18.sp,
-                                fontFamily = Montserrat,
+                                fontFamily = MontserratFont,
                                 fontWeight = FontWeight.Medium,
                                 color = if (password.isNotEmpty()) Color.Black else Color(0xFF828282)
                             ),
@@ -451,7 +448,7 @@ fun CreateAccountScreen(
                         Text(
                             text = "Confirm Password *",
                             fontSize = 20.sp,
-                            fontFamily = Montserrat,
+                            fontFamily = MontserratFont,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -466,7 +463,7 @@ fun CreateAccountScreen(
                                     "Confirm Password",
                                     color = Color(0xFF828282),
                                     fontSize = 18.sp,
-                                    fontFamily = Montserrat,
+                                    fontFamily = MontserratFont,
                                     fontWeight = FontWeight.Normal
                                 )
                             },
@@ -481,7 +478,7 @@ fun CreateAccountScreen(
                             shape = RoundedCornerShape(15.dp),
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 18.sp,
-                                fontFamily = Montserrat,
+                                fontFamily = MontserratFont,
                                 fontWeight = FontWeight.Medium,
                                 color = if (confirmPassword.isNotEmpty()) Color.Black else Color(0xFF828282)
                             ),
@@ -525,21 +522,19 @@ fun CreateAccountScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-//                    .padding(horizontal = 22.dp)
             ) {
                 Button(
                     onClick = {
                         showSuccessDialog = true
-                        onAccountCreated(email)
+                        onAccountCreated(email) // This should trigger navigation to home
                     },
-                    enabled = isNameValid && isEmailValid && isPasswordValid && isOldEnough &&
-                            confirmPassword == password,
+                    enabled = isFormValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
                         .border(
                             width = 2.dp,
-                            color = if (isNameValid && isEmailValid && isPasswordValid && isOldEnough && confirmPassword == password)
+                            color = if (isFormValid)
                                 Color(0xFFCBCBE7)
                             else
                                 Color(0xFFCBCBE7).copy(alpha = 0.5f),
@@ -547,16 +542,16 @@ fun CreateAccountScreen(
                         ),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF595880),
-                        disabledContainerColor = Color(0xFF595880),
-                        disabledContentColor = Color.White
+                        disabledContainerColor = Color(0xFF595880).copy(alpha = 0.5f),
+                        disabledContentColor = Color.White.copy(alpha = 0.5f)
                     ),
                     shape = RoundedCornerShape(15.dp)
                 ) {
                     Text(
                         text = "Create Account",
                         fontSize = 24.sp,
-                        color = Color.White,
-                        fontFamily = Montserrat,
+                        color = if (isFormValid) Color.White else Color.White.copy(alpha = 0.5f),
+                        fontFamily = MontserratFont,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -573,7 +568,11 @@ fun CreateAccountScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             TextButton(
-                                onClick = { showSuccessDialog = false },
+                                onClick = {
+                                    showSuccessDialog = false
+                                    // Call the account created callback which should navigate to home
+                                    onAccountCreated(email)
+                                },
                                 modifier = Modifier
                                     .border(
                                         width = 1.dp,
@@ -583,8 +582,8 @@ fun CreateAccountScreen(
                                     .background(Color.White, RoundedCornerShape(15.dp))
                             ) {
                                 Text(
-                                    text = "ok",
-                                    fontFamily = Montserrat,
+                                    text = "OK",
+                                    fontFamily = MontserratFont,
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 20.sp
                                 )
@@ -600,7 +599,7 @@ fun CreateAccountScreen(
                         ) {
                             Text(
                                 text = "Account Created!",
-                                fontFamily = Montserrat,
+                                fontFamily = MontserratFont,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = TextAlign.Center,
                                 fontSize = 22.sp,
@@ -618,7 +617,7 @@ fun CreateAccountScreen(
                             Text(
                                 text = "Verification email sent to\n$email",
                                 textAlign = TextAlign.Center,
-                                fontFamily = Montserrat,
+                                fontFamily = MontserratFont,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 22.sp,
                                 modifier = Modifier.fillMaxWidth()
@@ -636,7 +635,7 @@ fun CreateAccountScreen(
                     text = "Already have an account? ",
                     fontSize = 14.sp,
                     color = Color.Black,
-                    fontFamily = Inter,
+                    fontFamily = InterFont,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
@@ -644,8 +643,15 @@ fun CreateAccountScreen(
                     fontSize = 14.sp,
                     color = Color.Black,
                     textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable { onNavigateToLogin() },
-                    fontFamily = Inter,
+                    modifier = Modifier.clickable {
+                        // Use navController for navigation if available, otherwise fallback to callback
+                        if (navController != null) {
+                            navController.navigate("login")
+                        } else {
+                            onNavigateToLogin()
+                        }
+                    },
+                    fontFamily = InterFont,
                     fontWeight = FontWeight.Medium
                 )
 

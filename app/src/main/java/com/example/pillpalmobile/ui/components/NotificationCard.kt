@@ -17,6 +17,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.pillpalmobile.R
 import com.example.pillpalmobile.model.Notification
 import com.example.pillpalmobile.model.NotificationType
@@ -106,15 +107,15 @@ fun NotificationCard(notification: Notification, modifier: Modifier = Modifier) 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(150.dp) // Slightly increased height to accommodate larger text
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .background(color = style.bgColor, shape = RoundedCornerShape(16.dp))
+            .height(130.dp) // Increased from 110dp to 130dp
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .background(color = style.bgColor, shape = RoundedCornerShape(12.dp))
             .border(
-                width = 3.dp,
+                width = 2.dp,
                 color = style.borderColor,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(12.dp)
             )
-            .padding(16.dp)
+            .padding(14.dp) // Slightly increased internal padding
     ) {
         // Main content - ALL TEXT ALIGNED TO LEFT
         Column(
@@ -131,25 +132,25 @@ fun NotificationCard(notification: Notification, modifier: Modifier = Modifier) 
                     painter = painterResource(style.iconRes),
                     contentDescription = null,
                     modifier = Modifier
-                        .size(24.dp) // Increased icon size from 20dp to 24dp
+                        .size(22.dp) // Slightly increased icon size
                         .padding(end = 8.dp)
                 )
                 Text(
                     text = notification.title,
                     color = Color.Black,
-                    fontSize = 18.sp, // Increased from 14sp to 18sp
+                    fontSize = 17.sp, // Slightly increased font size
                     fontWeight = FontWeight.SemiBold,
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp)) // Increased spacing
 
             // Display the formatted subtitle
             Text(
                 text = formattedSubtitle,
                 color = Color.DarkGray,
-                fontSize = 20.sp, // Increased from 16sp to 20sp
-                lineHeight = 26.sp, // Increased line height
+                fontSize = 17.sp, // Slightly increased font size
+                lineHeight = 22.sp, // Increased line height
                 modifier = Modifier.align(Alignment.Start)
             )
         }
@@ -158,7 +159,7 @@ fun NotificationCard(notification: Notification, modifier: Modifier = Modifier) 
         Text(
             text = notification.timeAgo,
             color = style.timeColor, // This now uses A1A1A1 for all notification types
-            fontSize = 16.sp, // Increased from 12sp to 16sp
+            fontSize = 15.sp, // Slightly increased font size
             fontWeight = FontWeight.Medium,
             modifier = Modifier.align(Alignment.Start)
         )
@@ -166,7 +167,7 @@ fun NotificationCard(notification: Notification, modifier: Modifier = Modifier) 
 }
 
 @Composable
-fun NotificationCardsWithBorders() {
+fun NotificationCardsWithBorders(navController: NavController? = null) {
     val notifications = listOf(
         Notification(1, NotificationType.UPCOMING_DOSE, "Upcoming Dose", "lexapro in 5 hours 19 mins", "1 min ago", "lexapro"),
         Notification(2, NotificationType.REFILL_REMINDER, "Refill Reminder", "vitamin C is running low", "1 hour ago", "vitamin C"),
@@ -177,32 +178,32 @@ fun NotificationCardsWithBorders() {
     // Outer black rectangle (first border) with white background
     Box(
         modifier = Modifier
-            .padding(16.dp)
-            .background(Color.White, RoundedCornerShape(20.dp))
+            .padding(12.dp)
+            .background(Color.White, RoundedCornerShape(16.dp))
             .border(
-                width = 2.dp,
+                width = 1.5.dp,
                 color = Color.Black,
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(16.dp)
             )
-            .padding(vertical = 12.dp, horizontal = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 6.dp)
     ) {
         // Inner black rectangle (second border) with white background
         Box(
             modifier = Modifier
-                .background(Color.White, RoundedCornerShape(16.dp))
+                .background(Color.White, RoundedCornerShape(12.dp))
                 .border(
-                    width = 2.dp,
+                    width = 1.5.dp,
                     color = Color.Black,
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(12.dp)
                 )
-                .padding(vertical = 14.dp, horizontal = 16.dp)
+                .padding(vertical = 10.dp, horizontal = 12.dp)
         ) {
             // Notification cards content
             Column {
                 notifications.forEachIndexed { index, notification ->
                     NotificationCard(notification = notification)
                     if (index < notifications.lastIndex) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }

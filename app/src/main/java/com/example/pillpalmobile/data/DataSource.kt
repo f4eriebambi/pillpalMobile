@@ -13,27 +13,45 @@ object DataSource {
         dateJoined = "29/10/2025", // this will be from database input but rn mock
         avatarRes = R.drawable.pfp
     )
-    val medications = listOf(
+
+    // MutableList with detailed medication data using default values for missing fields
+    val medications = mutableListOf(
         Medication(
             id = 1,
             name = "medication 1",
-            reminderTimes = listOf("08:00", "20:00"), // testing with 2 times
+            reminderTimes = listOf("08:00", "20:00"),
             medicationDate = "Fri, Nov 7, 2025",
-            repeatEnabled = false, // repeat off so shows date field
+            repeatEnabled = false,
             notes = "Take with water"
         ),
-        Medication(id = 2, name = "medication 2"),
+        Medication(
+            id = 2,
+            name = "medication 2"
+            // Uses all default values: reminderTimes=["10:00"], medicationDate="Fri, Nov 7, 2025", etc.
+        ),
         Medication(
             id = 3,
             name = "medication 3",
-            reminderTimes = listOf("09:00", "14:00", "21:00"), // testing with 3 times
-            repeatEnabled = true, // repeat onn so hides date field
+            reminderTimes = listOf("09:00", "14:00", "21:00"),
+            repeatEnabled = true,
             repeatFrequency = "Weekly",
             repeatDays = listOf("Mon", "Wed", "Fri"),
             notes = "Don't take with dairy"
         ),
-        Medication(id = 4, name = "medication 4"),
-        Medication(id = 5, name = "medication 5"),
-        Medication(id = 6, name = "medication 6")
+        Medication(
+            id = 4,
+            name = "medication 4"
+            // Uses all default values
+        ),
+        Medication(
+            id = 5,
+            name = "medication 5"
+            // Uses all default values
+        ),
+        Medication(
+            id = 6,
+            name = "medication 6"
+            // Uses all default values
+        )
     )
 }

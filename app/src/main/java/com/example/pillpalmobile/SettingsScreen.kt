@@ -15,26 +15,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.pillpalmobile.Inter
 import com.example.pillpalmobile.Montserrat
-//import com.example.pillpalmobile.NavigationBar
 import androidx.compose.foundation.Image
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import com.example.pillpalmobile.R
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.graphics.asComposeRenderEffect
-
-
-
 
 @Composable
 fun SettingsScreen(
+    navController: NavController? = null,
     onNavigateBackHome: () -> Unit = {},
     onEditName: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
@@ -130,9 +124,33 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     if (selectedTab == 0) {
-                        GeneralSettingsSection(onEditName, onOpenAbout)
+                        GeneralSettingsSection(
+                            onEditName = {
+                                // Navigate to edit name screen or use callback
+                                onEditName()
+                            },
+                            onOpenAbout = {
+                                // Navigate to about screen or use callback
+                                onOpenAbout()
+                            },
+                            navController = navController
+                        )
                     } else {
-                        HelpSupportSection(onOpenHowToUse, onOpenPrivacyPolicy, onOpenTerms)
+                        HelpSupportSection(
+                            onOpenHowToUse = {
+                                // Navigate to how to use screen or use callback
+                                onOpenHowToUse()
+                            },
+                            onOpenPrivacyPolicy = {
+                                // Navigate to privacy policy screen or use callback
+                                onOpenPrivacyPolicy()
+                            },
+                            onOpenTerms = {
+                                // Navigate to terms screen or use callback
+                                onOpenTerms()
+                            },
+                            navController = navController
+                        )
                     }
                 }
             }
@@ -143,7 +161,8 @@ fun SettingsScreen(
 
             LogoutButtons(
                 onShowLogout = { showLogoutDialog = true },
-                onShowDelete = { showDeleteDialog = true }
+                onShowDelete = { showDeleteDialog = true },
+                navController = navController
             )
 
             Spacer(modifier = Modifier.height(80.dp))
@@ -164,6 +183,10 @@ fun SettingsScreen(
                 onConfirm = {
                     showLogoutDialog = false
                     onLogoutConfirm()
+                    // Navigate to login/welcome screen after logout
+                    navController?.navigate("welcome") {
+                        popUpTo(0) { inclusive = true }
+                    }
                 },
                 onDismiss = { showLogoutDialog = false }
             )
@@ -176,15 +199,16 @@ fun SettingsScreen(
                 onConfirm = {
                     showDeleteDialog = false
                     onDeleteAccountConfirm()
+                    // Navigate to login/welcome screen after account deletion
+                    navController?.navigate("welcome") {
+                        popUpTo(0) { inclusive = true }
+                    }
                 },
                 onDismiss = { showDeleteDialog = false }
             )
         }
     }
 }
-
-
-
 
 @Composable
 fun RowScope.TabButton(
@@ -215,20 +239,42 @@ fun RowScope.TabButton(
     }
 }
 
-
-
 @Composable
 fun GeneralSettingsSection(
     onEditName: () -> Unit,
-    onOpenAbout: () -> Unit
+    onOpenAbout: () -> Unit,
+    navController: NavController? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        SettingRow("Name", "Edit", true, onEditName)
-//        Divider(color = Color(0xFFE5E5E5))
+        SettingRow(
+            label = "Name",
+            value = "Edit",
+            clickable = true,
+            onClick = {
+                // Use navController or callback
+                if (navController != null) {
+                    // Navigate to edit name screen
+                    // navController.navigate("edit-name")
+                } else {
+                    onEditName()
+                }
+            }
+        )
         SettingRow("Date of birth", "Not Editable", false)
-//        Divider(color = Color(0xFFE5E5E5))
-        SettingRow("About PillPal", "Click Here", true, onOpenAbout)
-//        Divider(color = Color(0xFFE5E5E5))
+        SettingRow(
+            label = "About PillPal",
+            value = "Click Here",
+            clickable = true,
+            onClick = {
+                // Use navController or callback
+                if (navController != null) {
+                    // Navigate to about screen
+                    // navController.navigate("about")
+                } else {
+                    onOpenAbout()
+                }
+            }
+        )
         SettingRow("Time Zone", "System Default", false)
     }
 }
@@ -237,23 +283,60 @@ fun GeneralSettingsSection(
 fun HelpSupportSection(
     onOpenHowToUse: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
-    onOpenTerms: () -> Unit
+    onOpenTerms: () -> Unit,
+    navController: NavController? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-
-        SettingRow("How to use PillPal", "Click Here", true, onOpenHowToUse)
+        SettingRow(
+            label = "How to use PillPal",
+            value = "Click Here",
+            clickable = true,
+            onClick = {
+                // Use navController or callback
+                if (navController != null) {
+                    // Navigate to how to use screen
+                    // navController.navigate("how-to-use")
+                } else {
+                    onOpenHowToUse()
+                }
+            }
+        )
 
         ToggleSettingRow(
             label = "Dyslexia-Friendly Font"
         )
 
-        SettingRow("Privacy Policy", "Click Here", true, onOpenPrivacyPolicy)
+        SettingRow(
+            label = "Privacy Policy",
+            value = "Click Here",
+            clickable = true,
+            onClick = {
+                // Use navController or callback
+                if (navController != null) {
+                    // Navigate to privacy policy screen
+                    // navController.navigate("privacy-policy")
+                } else {
+                    onOpenPrivacyPolicy()
+                }
+            }
+        )
 
-        SettingRow("Terms of Service", "Click Here", true, onOpenTerms)
+        SettingRow(
+            label = "Terms of Service",
+            value = "Click Here",
+            clickable = true,
+            onClick = {
+                // Use navController or callback
+                if (navController != null) {
+                    // Navigate to terms screen
+                    // navController.navigate("terms")
+                } else {
+                    onOpenTerms()
+                }
+            }
+        )
     }
 }
-
-
 
 @Composable
 fun NotificationSection() {
@@ -294,18 +377,22 @@ fun NotificationSection() {
     }
 }
 
-
-
-
 @Composable
 fun LogoutButtons(
     onShowLogout: () -> Unit,
-    onShowDelete: () -> Unit
+    onShowDelete: () -> Unit,
+    navController: NavController? = null
 ) {
     Column {
-
         Button(
-            onClick = onShowLogout,
+            onClick = {
+                // Use navController for back navigation if needed, or show dialog
+                if (navController != null) {
+                    onShowLogout()
+                } else {
+                    onShowLogout()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(55.dp)
@@ -329,7 +416,14 @@ fun LogoutButtons(
         Spacer(modifier = Modifier.height(14.dp))
 
         OutlinedButton(
-            onClick = onShowDelete,
+            onClick = {
+                // Use navController for back navigation if needed, or show dialog
+                if (navController != null) {
+                    onShowDelete()
+                } else {
+                    onShowDelete()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(55.dp)
@@ -352,75 +446,6 @@ fun LogoutButtons(
         }
     }
 }
-
-@Composable
-fun ConfirmationDialog(
-    title: String,
-    message: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Box(
-            modifier = Modifier
-                .width(300.dp)
-                .background(
-                    color = Color.White.copy(alpha = 0.9f),
-                    shape = RoundedCornerShape(28.dp)
-                )
-                .shadow(12.dp, RoundedCornerShape(28.dp))
-                .padding(vertical = 24.dp, horizontal = 20.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Text(
-                    text = title,
-                    fontFamily = Montserrat,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = message,
-                    fontFamily = Inter,
-                    fontSize = 16.sp,
-                    color = Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(22.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-
-                    OutlinedButton(
-                        onClick = {
-                            onConfirm()
-                            onDismiss()
-                        },
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("OK", fontFamily = Montserrat, fontSize = 18.sp)
-                    }
-
-                    Button(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.outlinedButtonColors(Color.White),
-                        shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, Color.DarkGray)
-                    ) {
-                        Text("Cancel", fontFamily = Montserrat, fontSize = 18.sp)
-                    }
-                }
-            }
-        }
-    }
-
-}
-
-
 
 @Composable
 fun SettingRow(label: String, value: String, clickable: Boolean, onClick: () -> Unit = {}) {
@@ -465,8 +490,6 @@ fun SettingRow(label: String, value: String, clickable: Boolean, onClick: () -> 
     }
 }
 
-
-
 @Composable
 fun ToggleSettingRow(label: String) {
     var enabled by remember { mutableStateOf(false) }
@@ -493,7 +516,6 @@ fun ToggleSettingRow(label: String) {
         )
     }
 }
-
 
 @Composable
 fun NotificationToggle(label: String, value: Boolean, onChange: (Boolean) -> Unit) {
