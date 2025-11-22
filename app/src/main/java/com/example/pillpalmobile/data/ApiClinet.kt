@@ -7,20 +7,20 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 
-    private const val BASE_URL = "https://pillpal.space/"
+    private const val BASE_URL = "https://pillpal.space/api/"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
-    private val client = OkHttpClient.Builder()
+    private val httpClient: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(logging)
         .build()
 
     val instance: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(client)
+            .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }

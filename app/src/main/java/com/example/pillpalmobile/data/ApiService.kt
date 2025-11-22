@@ -1,44 +1,22 @@
 package com.example.pillpalmobile.data
 
-import retrofit2.Call
+import com.example.pillpalmobile.model.*
+import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
-
-data class RegisterRequest(
-    val full_name: String,
-    val username: String,
-    val email: String,
-    val password: String,
-    val birth_date: String,
-    val timezone: String = "UTC"
-)
-
-data class RegisterResponse(
-    val user_id: Int,
-    val full_name: String,
-    val username: String,
-    val email: String,
-    val timezone: String
-)
-
-data class LoginRequest(
-    val email: String,
-    val password: String
-)
-
-data class LoginResponse(
-    val user_id: Int,
-    val full_name: String,
-    val username: String,
-    val email: String,
-    val timezone: String
-)
+import retrofit2.http.Query
 
 interface ApiService {
 
-    @POST("/auth/register")
-    fun register(@Body request: RegisterRequest): Call<RegisterResponse>
+    @POST("auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    @POST("/auth/login")
-    fun login(@Body request: LoginRequest): Call<LoginResponse>
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+
+    @GET("medications")
+    suspend fun getMedications(
+        @Query("user_id") userId: Int
+    ): Response<List<MedicationResponse>>
 }

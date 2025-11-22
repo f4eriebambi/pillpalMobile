@@ -1,6 +1,7 @@
-package com.example.pillpalmobile.screens
+package com.example.pillpalmobile
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,28 +11,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pillpalmobile.Inter
-import com.example.pillpalmobile.Montserrat
-import com.example.pillpalmobile.NavigationBar
-import androidx.compose.foundation.Image
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import com.example.pillpalmobile.R
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.graphics.asComposeRenderEffect
-
-
-
+import com.example.pillpalmobile.ui.theme.Inter
+import com.example.pillpalmobile.ui.theme.Montserrat
+import com.example.pillpalmobile.ui.theme.AppNavigationBar   // ⭐ IMPORT CORRECTO
 
 @Composable
 fun SettingsScreen(
@@ -45,7 +36,6 @@ fun SettingsScreen(
     onDeleteAccountConfirm: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -89,17 +79,11 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .shadow(
                         elevation = 6.dp,
-                        shape = RoundedCornerShape(28.dp),
-                        clip = false
+                        shape = RoundedCornerShape(28.dp)
                     )
                     .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFFF5F5F5),
-                                Color.White
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(0f, 800f)
+                        brush = Brush.verticalGradient(
+                            listOf(Color(0xFFF5F5F5), Color.White)
                         ),
                         shape = RoundedCornerShape(28.dp)
                     )
@@ -149,12 +133,13 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(80.dp))
         }
 
+
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         ) {
-            NavigationBar()
+            AppNavigationBar()
         }
 
         if (showLogoutDialog) {
@@ -183,8 +168,7 @@ fun SettingsScreen(
     }
 }
 
-
-
+// ----------------------- (EL RESTO DE TUS FUNCIONES IGUAL) -----------------------
 
 @Composable
 fun RowScope.TabButton(
@@ -215,8 +199,6 @@ fun RowScope.TabButton(
     }
 }
 
-
-
 @Composable
 fun GeneralSettingsSection(
     onEditName: () -> Unit,
@@ -224,11 +206,8 @@ fun GeneralSettingsSection(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SettingRow("Name", "Edit", true, onEditName)
-//        Divider(color = Color(0xFFE5E5E5))
         SettingRow("Date of birth", "Not Editable", false)
-//        Divider(color = Color(0xFFE5E5E5))
         SettingRow("About PillPal", "Click Here", true, onOpenAbout)
-//        Divider(color = Color(0xFFE5E5E5))
         SettingRow("Time Zone", "System Default", false)
     }
 }
@@ -240,20 +219,12 @@ fun HelpSupportSection(
     onOpenTerms: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-
         SettingRow("How to use PillPal", "Click Here", true, onOpenHowToUse)
-
-        ToggleSettingRow(
-            label = "Dyslexia-Friendly Font"
-        )
-
+        ToggleSettingRow(label = "Dyslexia-Friendly Font")
         SettingRow("Privacy Policy", "Click Here", true, onOpenPrivacyPolicy)
-
         SettingRow("Terms of Service", "Click Here", true, onOpenTerms)
     }
 }
-
-
 
 @Composable
 fun NotificationSection() {
@@ -294,9 +265,6 @@ fun NotificationSection() {
     }
 }
 
-
-
-
 @Composable
 fun LogoutButtons(
     onShowLogout: () -> Unit,
@@ -311,8 +279,7 @@ fun LogoutButtons(
                 .height(55.dp)
                 .shadow(
                     elevation = 6.dp,
-                    shape = RoundedCornerShape(15.dp),
-                    clip = false
+                    shape = RoundedCornerShape(15.dp)
                 ),
             colors = ButtonDefaults.buttonColors(Color(0xFFCC0000)),
             shape = RoundedCornerShape(15.dp)
@@ -335,8 +302,7 @@ fun LogoutButtons(
                 .height(55.dp)
                 .shadow(
                     elevation = 6.dp,
-                    shape = RoundedCornerShape(15.dp),
-                    clip = false
+                    shape = RoundedCornerShape(15.dp)
                 )
                 .background(Color.White, RoundedCornerShape(15.dp)),
             shape = RoundedCornerShape(15.dp),
@@ -352,75 +318,6 @@ fun LogoutButtons(
         }
     }
 }
-
-@Composable
-    fun ConfirmationDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit
-    ) {
-        Dialog(onDismissRequest = onDismiss) {
-            Box(
-                modifier = Modifier
-                    .width(300.dp)
-                    .background(
-                        color = Color.White.copy(alpha = 0.9f),
-                        shape = RoundedCornerShape(28.dp)
-                    )
-                    .shadow(12.dp, RoundedCornerShape(28.dp))
-                    .padding(vertical = 24.dp, horizontal = 20.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                    Text(
-                        text = title,
-                        fontFamily = Montserrat,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = Color.Black
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = message,
-                        fontFamily = Inter,
-                        fontSize = 16.sp,
-                        color = Color.Black
-                    )
-
-                    Spacer(modifier = Modifier.height(22.dp))
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-
-                        OutlinedButton(
-                            onClick = {
-                                onConfirm()
-                                onDismiss()
-                            },
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Text("OK", fontFamily = Montserrat, fontSize = 18.sp)
-                        }
-
-                        Button(
-                            onClick = onDismiss,
-                            colors = ButtonDefaults.outlinedButtonColors(Color.White),
-                            shape = RoundedCornerShape(14.dp),
-                            border = BorderStroke(1.dp, Color.DarkGray)
-                        ) {
-                            Text("Cancel", fontFamily = Montserrat, fontSize = 18.sp)
-                        }
-                    }
-                }
-            }
-        }
-
-}
-
-
 
 @Composable
 fun SettingRow(label: String, value: String, clickable: Boolean, onClick: () -> Unit = {}) {
@@ -456,7 +353,7 @@ fun SettingRow(label: String, value: String, clickable: Boolean, onClick: () -> 
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Divider(
+            HorizontalDivider(
                 color = Color(0xFFE5E5E5),
                 thickness = 1.dp,
                 modifier = Modifier.width(130.dp)
@@ -464,8 +361,6 @@ fun SettingRow(label: String, value: String, clickable: Boolean, onClick: () -> 
         }
     }
 }
-
-
 
 @Composable
 fun ToggleSettingRow(label: String) {
@@ -493,7 +388,6 @@ fun ToggleSettingRow(label: String) {
         )
     }
 }
-
 
 @Composable
 fun NotificationToggle(label: String, value: Boolean, onChange: (Boolean) -> Unit) {
