@@ -25,8 +25,10 @@ object AuthStore {
             .putString(KEY_USERNAME, user.username)
             .putString(KEY_EMAIL, user.email)
             .putString(KEY_TIMEZONE, user.timezone)
+            .putString("birth_date", user.birth_date)
             .apply()
     }
+
 
     fun loadUser(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -35,15 +37,18 @@ object AuthStore {
             currentUser = null
             return
         }
+
         currentUser = LoginResponse(
             user_id = id,
             full_name = prefs.getString(KEY_FULL_NAME, null),
             username = prefs.getString(KEY_USERNAME, null),
             email = prefs.getString(KEY_EMAIL, null),
             timezone = prefs.getString(KEY_TIMEZONE, null),
+            birth_date = prefs.getString("birth_date", null),
             error = null
         )
     }
+
 
     fun clear(context: Context) {
         currentUser = null

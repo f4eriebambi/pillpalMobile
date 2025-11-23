@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillpalmobile.ui.theme.Inter
 import com.example.pillpalmobile.ui.theme.Montserrat
-import com.example.pillpalmobile.ui.theme.AppNavigationBar   // ⭐ IMPORT CORRECTO
+
 
 @Composable
 fun SettingsScreen(
@@ -139,7 +139,7 @@ fun SettingsScreen(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         ) {
-            AppNavigationBar()
+
         }
 
         if (showLogoutDialog) {

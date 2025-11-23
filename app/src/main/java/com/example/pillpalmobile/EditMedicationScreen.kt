@@ -50,7 +50,7 @@ fun EditMedicationScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Button(onClick = { onNavigateBack() }) {
+            Button(onClick = onNavigateBack) {
                 Text("Cancel")
             }
 
@@ -58,8 +58,10 @@ fun EditMedicationScreen(
                 onClick = {
                     val base = medication ?: Medication(
                         id = -1,
-                        name = name
+                        name = name,
+                        notes = notes
                     )
+
                     onSave(
                         base.copy(
                             name = name,

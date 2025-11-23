@@ -9,14 +9,28 @@ import retrofit2.http.Query
 
 interface ApiService {
 
+
     @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
+    suspend fun register(
+        @Body request: RegisterRequest
+    ): Response<RegisterResponse>
 
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+    suspend fun login(
+        @Body request: LoginRequest
+    ): Response<LoginResponse>
+
+
 
     @GET("medications")
     suspend fun getMedications(
         @Query("user_id") userId: Int
     ): Response<List<MedicationResponse>>
+
+
+
+    @POST("medications")
+    suspend fun addMedication(
+        @Body req: AddMedicationRequest
+    ): Response<AddMedicationResponse>
 }

@@ -1,10 +1,12 @@
 package com.example.pillpalmobile.model
 
 data class LoginResponse(
-    val user_id: Int? = null,
-    val full_name: String? = null,
-    val username: String? = null,
-    val email: String? = null,
-    val timezone: String? = null,
-    val error: String? = null
+    val user_id: Int?,
+    val full_name: String?,
+    val username: String?,
+    val email: String?,
+    val timezone: String?,
+    val birth_date: String?,
+    val error: String?
 )
+

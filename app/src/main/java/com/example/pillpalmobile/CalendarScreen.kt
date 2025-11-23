@@ -1,14 +1,9 @@
 package com.example.pillpalmobile
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillpalmobile.model.Medication
+import com.example.pillpalmobile.model.MedicationViewModel
 import com.example.pillpalmobile.ui.theme.Inter
 import com.example.pillpalmobile.ui.theme.Montserrat
 import java.time.Instant
@@ -31,7 +27,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
-// --------------------------- DATA MODELS ------------------------------
+// --------------------------------------------------
+// MODELOS PARA LA VISTA DEL CALENDARIO
+// --------------------------------------------------
 
 data class MedicationDisplay(
     val name: String,
@@ -58,13 +56,9 @@ private fun List<Medication>.filterForDate(selectedDate: LocalDate): List<Medica
     val selectedDateString = selectedDate.format(formatter)
 
     return this.filter { medication ->
-
         if (medication.repeatEnabled) {
-
             when (medication.repeatFrequency) {
-
                 "Daily" -> true
-
                 "Weekly" -> {
                     val selectedDay = selectedDate.dayOfWeek
                         .getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
@@ -73,7 +67,6 @@ private fun List<Medication>.filterForDate(selectedDate: LocalDate): List<Medica
                         it.take(3).equals(selectedDay, ignoreCase = true)
                     }
                 }
-
                 "Custom" -> {
                     if (medication.repeatStartDate != null && medication.repeatEndDate != null) {
                         val start = Instant.ofEpochMilli(medication.repeatStartDate)
@@ -88,7 +81,6 @@ private fun List<Medication>.filterForDate(selectedDate: LocalDate): List<Medica
 
                 else -> false
             }
-
         } else {
             try {
                 if (medication.medicationDate.equals(selectedDateString, ignoreCase = true))
@@ -96,19 +88,43 @@ private fun List<Medication>.filterForDate(selectedDate: LocalDate): List<Medica
 
                 val medDate = LocalDate.parse(medication.medicationDate, formatter)
                 medDate == selectedDate
-
-            } catch (e: Exception) { false }
+            } catch (e: Exception) {
+                false
+            }
         }
     }
 }
 
-// --------------------------- MAIN SCREEN ------------------------------
+// --------------------------------------------------
+// CALENDAR SCREEN  (con backend)
+// --------------------------------------------------
 
 @Composable
 fun CalendarScreen(
-    medications: List<Medication> = emptyList(),
-    onAddMedication: () -> Unit = {}
+    userId: Int,
+    viewModel: MedicationViewModel,
+    onAddMedication: () -> Unit
 ) {
+    val medsResponse by viewModel.medications.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMsg by viewModel.error.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.loadMedications(userId) }
+
+    val medications = medsResponse.map { med ->
+        val schedule = med.schedule
+
+        Medication(
+            id = med.med_id,
+            name = med.name,
+            reminderTimes = schedule?.times ?: emptyList(),
+            repeatEnabled = schedule?.repeat_type != null,
+            repeatFrequency = schedule?.repeat_type ?: "daily",
+            repeatDays = decodeDayMask(schedule?.day_mask),
+            notes = med.notes ?: ""
+        )
+    }
+
     val scrollState = rememberScrollState()
     val currentDate = LocalDate.now()
     var selectedDate by remember { mutableStateOf(currentDate) }
@@ -119,7 +135,6 @@ fun CalendarScreen(
             .background(Color.White)
     ) {
 
-        // MAIN CONTENT
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -127,15 +142,33 @@ fun CalendarScreen(
                 .padding(horizontal = 20.dp)
                 .padding(top = 234.dp, bottom = 175.dp)
         ) {
-            PlanCards(
-                selectedDate = selectedDate,
-                medications = medications
-            )
+            when {
+                isLoading -> {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                errorMsg != null -> {
+                    Text(
+                        text = "Error loading medications: $errorMsg",
+                        color = Color.Red,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                else -> {
+                    PlanCards(
+                        selectedDate = selectedDate,
+                        medications = medications
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(30.dp))
         }
 
-        // HEADER
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -162,14 +195,12 @@ fun CalendarScreen(
             )
         }
 
-        // ADD MED BUTTON
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .padding(bottom = 120.dp)
         ) {
-
             Button(
                 onClick = onAddMedication,
                 modifier = Modifier
@@ -191,18 +222,21 @@ fun CalendarScreen(
             }
         }
 
-        // NAV BAR
         Box(
             Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 20.dp)
         ) {
-            CalendarNavigationBar()
+            CalendarNavigationBar(
+                onAddMedication = onAddMedication
+            )
         }
     }
 }
 
-// --------------------------- HEADER ------------------------------
+// --------------------------------------------------
+// HEADER / WEEK / DÍAS
+// --------------------------------------------------
 
 @Composable
 fun CalendarHeader(currentDate: LocalDate) {
@@ -216,8 +250,6 @@ fun CalendarHeader(currentDate: LocalDate) {
         color = Color.Black
     )
 }
-
-// --------------------------- WEEKDAY LABELS ------------------------------
 
 @Composable
 fun WeekdayLabels() {
@@ -237,8 +269,6 @@ fun WeekdayLabels() {
         }
     }
 }
-
-// --------------------------- DATE NUMBERS ------------------------------
 
 @Composable
 fun DateNumbersRow(
@@ -290,7 +320,9 @@ fun DateNumbersRow(
     }
 }
 
-// --------------------------- PLAN CARDS ------------------------------
+// --------------------------------------------------
+// PLANES
+// --------------------------------------------------
 
 @Composable
 fun PlanCards(
@@ -300,16 +332,8 @@ fun PlanCards(
     val filtered = medications.filterForDate(selectedDate)
     val display = filtered.toCalendarDisplay()
 
-    val morning = display.filter {
-        val h = LocalTime.parse(it.time).hour
-        h in 5..11
-    }
-
-    val afternoon = display.filter {
-        val h = LocalTime.parse(it.time).hour
-        h in 12..16
-    }
-
+    val morning = display.filter { LocalTime.parse(it.time).hour in 5..11 }
+    val afternoon = display.filter { LocalTime.parse(it.time).hour in 12..16 }
     val evening = display.filter {
         val h = LocalTime.parse(it.time).hour
         h >= 17 || h <= 4
@@ -365,7 +389,9 @@ fun EmptyState() {
     }
 }
 
-// --------------------------- PLAN CARD ------------------------------
+// --------------------------------------------------
+// CARD INDIVIDUAL
+// --------------------------------------------------
 
 @Composable
 fun PlanCard(
@@ -434,11 +460,14 @@ fun PlanCard(
     }
 }
 
-// --------------------------- NAV BAR ------------------------------
+// --------------------------------------------------
+// NAV BAR
+// --------------------------------------------------
 
 @Composable
-fun CalendarNavigationBar() {
-
+fun CalendarNavigationBar(
+    onAddMedication: () -> Unit
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -446,8 +475,19 @@ fun CalendarNavigationBar() {
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
 
-        NavigationButton(R.drawable.home, "home", false) {}
-        NavigationButton(R.drawable.history, "history", false) {}
+        NavigationButton(
+            iconRes = R.drawable.home,
+            label = "Home",
+            isSelected = false,
+            onClick = { /* NAV a HomeScreen */ }
+        )
+
+        NavigationButton(
+            iconRes = R.drawable.history,
+            label = "History",
+            isSelected = false,
+            onClick = { }
+        )
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
@@ -455,11 +495,11 @@ fun CalendarNavigationBar() {
                     .size(72.dp)
                     .background(Color(0xFFCBCBE7), CircleShape)
                     .border(2.dp, Color(0xFF595880), CircleShape)
-                    .clickable {}
+                    .clickable { onAddMedication() }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.add_calendar),
-                    contentDescription = null,
+                    contentDescription = "Add Medication",
                     tint = Color.Unspecified,
                     modifier = Modifier
                         .size(48.dp)
@@ -468,8 +508,19 @@ fun CalendarNavigationBar() {
             }
         }
 
-        NavigationButton(R.drawable.bell, "alerts", false) {}
-        NavigationButton(R.drawable.user_settings, "settings", false) {}
+        NavigationButton(
+            iconRes = R.drawable.bell,
+            label = "Alerts",
+            isSelected = false,
+            onClick = { }
+        )
+
+        NavigationButton(
+            iconRes = R.drawable.user_settings,
+            label = "Settings",
+            isSelected = false,
+            onClick = { }
+        )
     }
 }
 
@@ -501,7 +552,7 @@ fun NavigationButton(
                 verticalArrangement = Arrangement.Center
             ) {
                 Icon(
-                    painter = painterResource(iconRes),
+                    painter = painterResource(id = iconRes),
                     contentDescription = label,
                     tint = Color.Unspecified,
                     modifier = Modifier.size(36.dp)
@@ -517,7 +568,7 @@ fun NavigationButton(
                     color = Color.Black
                 )
             }
+
         }
     }
 }
-
