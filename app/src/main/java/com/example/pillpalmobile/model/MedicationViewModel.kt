@@ -64,7 +64,7 @@ class MedicationViewModel : ViewModel() {
             try {
                 val response = api.addMedication(request)
                 if (response.isSuccessful) {
-                    // Una vez creada → refrescamos lista
+
                     loadMedications(request.user_id)
                 } else {
                     _saveError.value = "Save failed: ${response.code()}"

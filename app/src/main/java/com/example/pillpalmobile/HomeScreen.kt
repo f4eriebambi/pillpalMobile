@@ -57,7 +57,7 @@ fun HomeScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMsg by viewModel.error.collectAsState()
 
-    // Cargar medicamentos del usuario
+
     LaunchedEffect(user.id) {
         viewModel.loadMedications(userId = user.id)
     }

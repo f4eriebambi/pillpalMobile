@@ -12,7 +12,7 @@ object AuthStore {
     private const val KEY_EMAIL = "email"
     private const val KEY_TIMEZONE = "timezone"
 
-    // user actual en memoria
+
     var currentUser: LoginResponse? = null
         private set
 

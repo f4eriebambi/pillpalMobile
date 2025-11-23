@@ -23,7 +23,7 @@ fun AddMedicationScreen(
 
     var repeatType by remember { mutableStateOf("daily") }
 
-    // Usamos un mapa reactivo para que Compose se entere de los cambios
+
     val days = remember {
         mutableStateMapOf(
             "Mon" to false,

@@ -43,7 +43,7 @@ fun WelcomeScreen(
         Spacer(modifier = Modifier.height(64.dp))
         Spacer(modifier = Modifier.height(72.dp))
 
-        // sign in button
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -76,7 +76,7 @@ fun WelcomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // create account button
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()

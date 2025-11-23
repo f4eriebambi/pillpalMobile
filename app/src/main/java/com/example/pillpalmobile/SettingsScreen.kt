@@ -168,7 +168,7 @@ fun SettingsScreen(
     }
 }
 
-// ----------------------- (EL RESTO DE TUS FUNCIONES IGUAL) -----------------------
+
 
 @Composable
 fun RowScope.TabButton(
