@@ -18,11 +18,13 @@ import kotlinx.coroutines.launch
 import com.example.pillpalmobile.R
 import com.example.pillpalmobile.model.MedicationResponse
 import com.example.pillpalmobile.model.Medication
-
+import com.example.pillpalmobile.screens.SettingsScreen
+import com.example.pillpalmobile.HistoryScreen
+import com.example.pillpalmobile.CalendarScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     var startDestination by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -32,8 +34,12 @@ fun AppNavGraph(navController: NavHostController) {
     }
 
     if (startDestination != null) {
-        NavHost(navController = navController, startDestination = startDestination!!) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination!!
+        ) {
 
+            // LOGIN
             composable("login") {
                 LoginScreen(
                     onNavigateToSignUp = { navController.navigate("signup") },
@@ -46,6 +52,7 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
 
+            // SIGNUP
             composable("signup") {
                 CreateAccountScreen(
                     onAccountCreated = {
@@ -56,91 +63,86 @@ fun AppNavGraph(navController: NavHostController) {
                     onNavigateToLogin = { navController.navigate("login") }
                 )
             }
+
+            // HOME
             composable("home") {
                 var user by remember { mutableStateOf<User?>(null) }
                 var medications by remember { mutableStateOf<List<MedicationResponse>>(emptyList()) }
                 var isMedLoading by remember { mutableStateOf(true) }
 
-                val context = LocalContext.current
-                val scope = rememberCoroutineScope()
+                val ctx = LocalContext.current
+                val coroutine = rememberCoroutineScope()
 
-                // ------------ LOAD USER PROFILE (UNCHANGED) ------------
+                // LOAD USER
                 LaunchedEffect(Unit) {
                     try {
-                        val token = AuthStore.getToken(context)
-                        if (token == null) return@LaunchedEffect
+                        val token = AuthStore.getToken(ctx)
+                        if (token != null) {
 
-                        val response = RetrofitClient.authService.getProfile("Bearer $token")
+                            val response = RetrofitClient.authService.getProfile("Bearer $token")
 
-                        if (response.isSuccessful) {
-                            val data = response.body()
-                            if (data != null) {
+                            if (response.isSuccessful) {
+                                val data = response.body()
+                                if (data != null) {
 
-                                val firstName = data.full_name
-                                    ?.split(" ")
-                                    ?.firstOrNull()
-                                    ?.ifBlank { "User" }
-                                    ?: "User"
+                                    val firstName = data.full_name
+                                        ?.split(" ")
+                                        ?.firstOrNull()
+                                        ?.ifBlank { "User" }
+                                        ?: "User"
 
-                                val formattedBirthday = try {
-                                    val inputFormats = listOf(
-                                        "yyyy-MM-dd",
-                                        "yyyy-MM-dd HH:mm:ss",
-                                        "EEE MMM dd HH:mm:ss zzz yyyy",
-                                        "yyyy-MM-dd'T'HH:mm:ss'Z'"
-                                    )
+                                    val formattedBirthday = try {
+                                        val formats = listOf(
+                                            "yyyy-MM-dd",
+                                            "yyyy-MM-dd HH:mm:ss",
+                                            "EEE MMM dd HH:mm:ss zzz yyyy",
+                                            "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                                        )
+                                        val outFormat = java.text.SimpleDateFormat("dd/MM/yy")
 
-                                    val outputFormat = java.text.SimpleDateFormat(
-                                        "dd/MM/yy",
-                                        java.util.Locale.getDefault()
-                                    )
+                                        var parsed: java.util.Date? = null
 
-                                    var parsed: java.util.Date? = null
-
-                                    for (pattern in inputFormats) {
-                                        try {
-                                            val sdf = java.text.SimpleDateFormat(
-                                                pattern,
-                                                java.util.Locale.getDefault()
-                                            )
-                                            parsed = sdf.parse(data.birthday)
-                                            if (parsed != null) break
-                                        } catch (_: Exception) {
+                                        for (f in formats) {
+                                            try {
+                                                parsed = java.text.SimpleDateFormat(f)
+                                                    .parse(data.birthday)
+                                                if (parsed != null) break
+                                            } catch (_: Exception) {}
                                         }
+
+                                        parsed?.let { outFormat.format(it) }
+                                            ?: data.birthday ?: "N/A"
+
+                                    } catch (_: Exception) {
+                                        data.birthday ?: "N/A"
                                     }
 
-                                    if (parsed != null) outputFormat.format(parsed) else data.birthday ?: "N/A"
-                                } catch (_: Exception) {
-                                    data.birthday ?: "N/A"
+                                    user = User(
+                                        name = firstName,
+                                        birthday = formattedBirthday,
+                                        avatarRes = R.drawable.pfp
+                                    )
                                 }
-
-                                user = User(
-                                    name = firstName,
-                                    birthday = formattedBirthday,
-                                    avatarRes = R.drawable.pfp
-                                )
                             }
-                        }
 
-                    } catch (_: Exception) {
-                    }
+                        }
+                    } catch (_: Exception) {}
                 }
 
-                // ------------ LOAD MEDICATIONS (NEW PART) ------------
+                // LOAD MEDICATIONS
                 LaunchedEffect(Unit) {
                     try {
-                        val token = AuthStore.getToken(context)
+                        val token = AuthStore.getToken(ctx)
                         if (token != null) {
                             medications = RetrofitClient.medicationService
                                 .getMedications("Bearer $token")
                         }
                     } catch (e: Exception) {
-                        println("Error fetching meds: $e")
+                        println("Med error: $e")
                     }
                     isMedLoading = false
                 }
 
-                // ------------ UI ------------
                 if (user != null) {
                     HomeScreen(
                         user = user!!,
@@ -148,8 +150,8 @@ fun AppNavGraph(navController: NavHostController) {
                         isMedicationLoading = isMedLoading,
                         navController = navController,
                         onLogout = {
-                            scope.launch {
-                                AuthStore.clearToken(context)
+                            coroutine.launch {
+                                AuthStore.clearToken(ctx)
                                 navController.navigate("login") {
                                     popUpTo("home") { inclusive = true }
                                 }
@@ -166,44 +168,42 @@ fun AppNavGraph(navController: NavHostController) {
                 }
             }
 
+            // EDIT MEDICATION
             composable("edit_med/{medId}") { backStackEntry ->
                 val medId = backStackEntry.arguments?.getString("medId")?.toIntOrNull()
-                val context = LocalContext.current
+                val ctx = LocalContext.current
                 var medication by remember { mutableStateOf<Medication?>(null) }
                 var isLoading by remember { mutableStateOf(true) }
 
-                // LOAD MEDICATION BY ID
                 LaunchedEffect(medId) {
                     if (medId != null) {
                         try {
-                            val token = AuthStore.getToken(context)
+                            val token = AuthStore.getToken(ctx)
                             if (token != null) {
-                                val response = RetrofitClient.medicationService.getMedicationById(
+                                val res = RetrofitClient.medicationService.getMedicationById(
                                     "Bearer $token",
                                     medId
                                 )
 
                                 medication = Medication(
-                                    id = response.med_id,
-                                    name = response.name,
-                                    reminderTimes = response.schedule?.times ?: emptyList(),
-                                    medicationDate = response.active_start_date ?: "",
-                                    repeatEnabled = response.schedule?.repeat_type != null,
-                                    repeatFrequency = when (response.schedule?.repeat_type) {
+                                    id = res.med_id,
+                                    name = res.name,
+                                    reminderTimes = res.schedule?.times ?: emptyList(),
+                                    medicationDate = res.active_start_date ?: "",
+                                    repeatEnabled = res.schedule?.repeat_type != null,
+                                    repeatFrequency = when (res.schedule?.repeat_type) {
                                         "daily" -> "Daily"
                                         "weekly" -> "Weekly"
                                         "custom" -> "Custom"
                                         else -> "Daily"
                                     },
-                                    repeatDays = decodeDayMask(response.schedule?.day_mask),
-                                    repeatStartDate = response.schedule?.custom_start.toEpochMillis(),
-                                    repeatEndDate = response.schedule?.custom_end.toEpochMillis(),
-                                    notes = response.notes ?: ""
+                                    repeatDays = decodeDayMask(res.schedule?.day_mask),
+                                    repeatStartDate = res.schedule?.custom_start.toEpochMillis(),
+                                    repeatEndDate = res.schedule?.custom_end.toEpochMillis(),
+                                    notes = res.notes ?: ""
                                 )
                             }
-                        } catch (e: Exception) {
-                            println("Error loading med: $e")
-                        }
+                        } catch (_: Exception) {}
                     }
 
                     isLoading = false
@@ -211,7 +211,7 @@ fun AppNavGraph(navController: NavHostController) {
 
                 if (isLoading) {
                     Box(
-                        Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
@@ -220,20 +220,24 @@ fun AppNavGraph(navController: NavHostController) {
                     EditMedicationScreen(
                         medication = medication,
                         onNavigateBack = { navController.popBackStack() },
-                        onDelete = { id ->
-                            // TODO delete endpoint
-                            navController.popBackStack()
-                        },
-                        onSave = { updatedMed ->
-                            // TODO save API
-                            navController.popBackStack()
-                        }
+                        onDelete = { navController.popBackStack() },
+                        onSave = { navController.popBackStack() }
                     )
                 }
             }
 
 
+            composable("settings") {
+                SettingsScreen(navController)
+            }
 
+            composable("history") {
+                HistoryScreen(navController)
+            }
+
+            composable("calendar") {
+                CalendarScreen(navController)
+            }
         }
     }
 }

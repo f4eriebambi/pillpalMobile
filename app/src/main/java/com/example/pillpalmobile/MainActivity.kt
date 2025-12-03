@@ -53,6 +53,7 @@ import com.example.pillpalmobile.data.AuthStore
 //import com.example.pillpalmobile.data.DataSource.medications
 import com.example.pillpalmobile.model.MedicationResponse
 import com.example.pillpalmobile.navigation.AppNavGraph
+import com.example.pillpalmobile.navigation.BottomNavBar
 import com.example.pillpalmobile.network.RetrofitClient
 import kotlinx.coroutines.launch
 
@@ -179,7 +180,7 @@ fun HomeScreen(
 //                .background(Color.White)
                 .padding(bottom = 20.dp)
         ) {
-            NavigationBar()
+            BottomNavBar(navController, current = "home")
         }
     }
 }
@@ -640,7 +641,7 @@ fun MedicationRowUnified(
 
 
 @Composable
-fun NavigationBar() {
+fun NavigationBar(navController: NavHostController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -678,7 +679,7 @@ fun NavigationBar() {
             iconRes = R.drawable.history,
             label = "history",
             modifier = Modifier
-                .clickable { /* navigate to history */ },
+                .clickable { navController.navigate("HistoryScreen")},
         )
 
         // add/calendar
@@ -686,23 +687,16 @@ fun NavigationBar() {
             iconRes = R.drawable.add_calendar,
             label = "add",
             modifier = Modifier
-                .clickable { /* navigation to add/calendar */ },
+                .clickable {navController.navigate("CalendarScreen")},
         )
 
-        // notifs
-        NavigationButton(
-            iconRes = R.drawable.bell,
-            label = "alerts",
-            modifier = Modifier
-                .clickable { /* navigate to notifs */ },
-        )
 
         // settings
         NavigationButton(
             iconRes = R.drawable.user_settings,
             label = "settings",
             modifier = Modifier
-                .clickable { /* navigate to settings */ },
+                .clickable { navController.navigate("SettingsScreen") },
         )
     }
 }

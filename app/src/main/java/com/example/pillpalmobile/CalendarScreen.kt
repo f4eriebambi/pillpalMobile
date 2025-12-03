@@ -30,7 +30,8 @@ import java.time.format.TextStyle
 import java.util.*
 import java.util.Locale
 import com.example.pillpalmobile.model.Medication
-
+import androidx.navigation.NavHostController
+import com.example.pillpalmobile.navigation.BottomNavBar
 
 
 // https://www.youtube.com/watch?v=vL_3r9tz1gM
@@ -113,6 +114,7 @@ private fun List<Medication>.filterForDate(selectedDate: LocalDate): List<Medica
 
 @Composable
 fun CalendarScreen(
+    navController: NavHostController,
     medications: List<Medication> = emptyList(),
     onAddMedication: () -> Unit = {}
 ) {
@@ -248,7 +250,7 @@ fun CalendarScreen(
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
         ) {
-            CalendarNavigationBar()
+            BottomNavBar(navController, current = "calendar")
         }
     }
 }
@@ -554,127 +556,127 @@ fun PlanCard(
     }
 }
 
-// nav bar
-@Composable
-fun CalendarNavigationBar() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // home
-        NavigationButton(
-            iconRes = R.drawable.home,
-            label = "home",
-            isSelected = false,
-            onClick = { /* navigate to home */ }
-        )
-
-        // history
-        NavigationButton(
-            iconRes = R.drawable.history,
-            label = "history",
-            isSelected = false,
-            onClick = { /* navigate to history */ }
-        )
-
-        // calendar
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .background(
-                        color = Color(0xFFCBCBE7),
-                        shape = CircleShape
-                    )
-                    .border(
-                        width = 2.dp,
-                        color = Color(0xFF595880),
-                        shape = CircleShape
-                    )
-                    .clickable { /* already on calendar */ },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.add_calendar),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = Color.Unspecified
-                )
-            }
-        }
-
-        // notifications
-        NavigationButton(
-            iconRes = R.drawable.bell,
-            label = "alerts",
-            isSelected = false,
-            onClick = { /* navigate to notifications */ }
-        )
-
-        // settings
-        NavigationButton(
-            iconRes = R.drawable.user_settings,
-            label = "settings",
-            isSelected = false,
-            onClick = { /* navigate to settings */ }
-        )
-    }
-}
-
-@Composable
-fun NavigationButton(
-    iconRes: Int,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(70.dp)
-                .shadow(
-                    elevation = 4.dp,
-                    shape = CircleShape,
-                    spotColor = Color.Black,
-                    ambientColor = Color.Black,
-                    clip = false
-                )
-                .background(
-                    color = if (isSelected) Color(0xFFCBCBE7) else Color.White,
-                    shape = CircleShape
-                )
-                .border(
-                    width = if (isSelected) 2.dp else 1.dp,
-                    color = if (isSelected) Color(0xFF595880) else Color(0xFF7C8081),
-                    shape = CircleShape
-                )
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .padding(top = 4.dp),
-                    tint = Color.Unspecified
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    fontFamily = Montserrat,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-            }
-        }
-    }
-}
+//// nav bar
+//@Composable
+//fun CalendarNavigationBar() {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(horizontal = 16.dp, vertical = 4.dp),
+//        horizontalArrangement = Arrangement.SpaceEvenly,
+//        verticalAlignment = Alignment.CenterVertically
+//    ) {
+//        // home
+//        NavigationButton(
+//            iconRes = R.drawable.home,
+//            label = "home",
+//            isSelected = false,
+//            onClick = { /* navigate to home */ }
+//        )
+//
+//        // history
+//        NavigationButton(
+//            iconRes = R.drawable.history,
+//            label = "history",
+//            isSelected = false,
+//            onClick = { /* navigate to history */ }
+//        )
+//
+//        // calendar
+//        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//            Box(
+//                modifier = Modifier
+//                    .size(72.dp)
+//                    .background(
+//                        color = Color(0xFFCBCBE7),
+//                        shape = CircleShape
+//                    )
+//                    .border(
+//                        width = 2.dp,
+//                        color = Color(0xFF595880),
+//                        shape = CircleShape
+//                    )
+//                    .clickable { /* already on calendar */ },
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Icon(
+//                    painter = painterResource(R.drawable.add_calendar),
+//                    contentDescription = null,
+//                    modifier = Modifier.size(48.dp),
+//                    tint = Color.Unspecified
+//                )
+//            }
+//        }
+//
+//        // notifications
+//        NavigationButton(
+//            iconRes = R.drawable.bell,
+//            label = "alerts",
+//            isSelected = false,
+//            onClick = { /* navigate to notifications */ }
+//        )
+//
+//        // settings
+//        NavigationButton(
+//            iconRes = R.drawable.user_settings,
+//            label = "settings",
+//            isSelected = false,
+//            onClick = { /* navigate to settings */ }
+//        )
+//    }
+//}
+//
+//@Composable
+//fun NavigationButton(
+//    iconRes: Int,
+//    label: String,
+//    isSelected: Boolean,
+//    onClick: () -> Unit
+//) {
+//    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//        Box(
+//            modifier = Modifier
+//                .size(70.dp)
+//                .shadow(
+//                    elevation = 4.dp,
+//                    shape = CircleShape,
+//                    spotColor = Color.Black,
+//                    ambientColor = Color.Black,
+//                    clip = false
+//                )
+//                .background(
+//                    color = if (isSelected) Color(0xFFCBCBE7) else Color.White,
+//                    shape = CircleShape
+//                )
+//                .border(
+//                    width = if (isSelected) 2.dp else 1.dp,
+//                    color = if (isSelected) Color(0xFF595880) else Color(0xFF7C8081),
+//                    shape = CircleShape
+//                )
+//                .clickable(onClick = onClick),
+//            contentAlignment = Alignment.Center
+//        ) {
+//            Column(
+//                horizontalAlignment = Alignment.CenterHorizontally,
+//                verticalArrangement = Arrangement.Center
+//            ) {
+//                Icon(
+//                    painter = painterResource(iconRes),
+//                    contentDescription = null,
+//                    modifier = Modifier
+//                        .size(36.dp)
+//                        .padding(top = 4.dp),
+//                    tint = Color.Unspecified
+//                )
+//                Spacer(modifier = Modifier.height(2.dp))
+//                Text(
+//                    text = label,
+//                    fontSize = 11.sp,
+//                    fontFamily = Montserrat,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = Color.Black
+//                )
+//            }
+//        }
+//    }
+//}

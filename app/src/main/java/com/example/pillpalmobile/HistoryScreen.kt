@@ -27,6 +27,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
+import androidx.navigation.NavHostController
+import com.example.pillpalmobile.navigation.BottomNavBar
 
 /**
  * BACKEND will dp:
@@ -69,6 +71,7 @@ data class DayHistory(
 
 @Composable
 fun HistoryScreen(
+    navController: NavHostController,
     medications: List<Medication> = emptyList(),
     currentStreak: Int = 0, // for BACKEND: Calculate from API
     onNavigateHome: () -> Unit = {},
@@ -129,12 +132,7 @@ fun HistoryScreen(
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
         ) {
-            HistoryNavigationBar(
-                onNavigateHome = onNavigateHome,
-                onNavigateCalendar = onNavigateCalendar,
-                onNavigateNotifications = onNavigateNotifications,
-                onNavigateSettings = onNavigateSettings
-            )
+            BottomNavBar(navController, current = "history")
         }
     }
 }
@@ -528,139 +526,84 @@ fun StatusBadge(status: HistoryStatus, isAllMedicationsCard: Boolean) {
     }
 }
 
-// nav bar
-@Composable
-fun HistoryNavigationBar(
-    onNavigateHome: () -> Unit,
-    onNavigateCalendar: () -> Unit,
-    onNavigateNotifications: () -> Unit,
-    onNavigateSettings: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // home
-        HistoryNavigationButton(
-            iconRes = R.drawable.home,
-            label = "home",
-            isSelected = false,
-            onClick = onNavigateHome
-        )
-
-        // history
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = CircleShape,
-                        spotColor = Color.Black,
-                        ambientColor = Color.Black,
-                        clip = false
-                    )
-                    .background(
-                        color = Color(0xFFCBCBE7),
-                        shape = CircleShape
-                    )
-                    .border(
-                        width = 2.dp,
-                        color = Color(0xFF595880),
-                        shape = CircleShape
-                    )
-                    .clickable { /* already on history */ },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.history),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = Color.Unspecified
-                )
-            }
-        }
-
-        // calendar
-        HistoryNavigationButton(
-            iconRes = R.drawable.add_calendar,
-            label = "add",
-            isSelected = false,
-            onClick = onNavigateCalendar
-        )
-
-        // notifications
-        HistoryNavigationButton(
-            iconRes = R.drawable.bell,
-            label = "alerts",
-            isSelected = false,
-            onClick = onNavigateNotifications
-        )
-
-        // settings
-        HistoryNavigationButton(
-            iconRes = R.drawable.user_settings,
-            label = "settings",
-            isSelected = false,
-            onClick = onNavigateSettings
-        )
-    }
-}
-
-@Composable
-fun HistoryNavigationButton(
-    iconRes: Int,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(70.dp)
-                .shadow(
-                    elevation = 4.dp,
-                    shape = CircleShape,
-                    spotColor = Color.Black,
-                    ambientColor = Color.Black,
-                    clip = false
-                )
-                .background(
-                    color = if (isSelected) Color(0xFFCBCBE7) else Color.White,
-                    shape = CircleShape
-                )
-                .border(
-                    width = if (isSelected) 2.dp else 1.dp,
-                    color = if (isSelected) Color(0xFF595880) else Color(0xFF7C8081),
-                    shape = CircleShape
-                )
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .padding(top = 4.dp),
-                    tint = Color.Unspecified
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    fontFamily = Montserrat,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-            }
-        }
-    }
-}
+//// nav bar
+//@Composable
+//fun HistoryNavigationBar(
+//    onNavigateHome: () -> Unit,
+//    onNavigateCalendar: () -> Unit,
+//    onNavigateNotifications: () -> Unit,
+//    onNavigateSettings: () -> Unit
+//) {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(horizontal = 16.dp, vertical = 4.dp),
+//        horizontalArrangement = Arrangement.SpaceEvenly,
+//        verticalAlignment = Alignment.CenterVertically
+//    ) {
+//        // home
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.home,
+//            label = "home",
+//            isSelected = false,
+//            onClick = onNavigateHome
+//        )
+//
+//        // history
+//        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//            Box(
+//                modifier = Modifier
+//                    .size(72.dp)
+//                    .shadow(
+//                        elevation = 4.dp,
+//                        shape = CircleShape,
+//                        spotColor = Color.Black,
+//                        ambientColor = Color.Black,
+//                        clip = false
+//                    )
+//                    .background(
+//                        color = Color(0xFFCBCBE7),
+//                        shape = CircleShape
+//                    )
+//                    .border(
+//                        width = 2.dp,
+//                        color = Color(0xFF595880),
+//                        shape = CircleShape
+//                    )
+//                    .clickable { /* already on history */ },
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Icon(
+//                    painter = painterResource(R.drawable.history),
+//                    contentDescription = null,
+//                    modifier = Modifier.size(48.dp),
+//                    tint = Color.Unspecified
+//                )
+//            }
+//        }
+//
+//        // calendar
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.add_calendar,
+//            label = "add",
+//            isSelected = false,
+//            onClick = onNavigateCalendar
+//        )
+//
+//        // notifications
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.bell,
+//            label = "alerts",
+//            isSelected = false,
+//            onClick = onNavigateNotifications
+//        )
+//
+//        // settings
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.user_settings,
+//            label = "settings",
+//            isSelected = false,
+//            onClick = onNavigateSettings
+//        )
+//    }
+//}

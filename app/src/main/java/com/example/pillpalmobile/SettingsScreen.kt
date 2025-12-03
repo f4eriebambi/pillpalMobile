@@ -29,13 +29,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.graphics.asComposeRenderEffect
-
-
+import androidx.navigation.NavHostController
+import com.example.pillpalmobile.navigation.BottomNavBar
 
 
 @Composable
 fun SettingsScreen(
-    onNavigateBackHome: () -> Unit = {},
+    navController: NavHostController,
     onEditName: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onOpenHowToUse: () -> Unit = {},
@@ -154,7 +154,7 @@ fun SettingsScreen(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         ) {
-            NavigationBar()
+            BottomNavBar(navController, current = "settings")
         }
 
         if (showLogoutDialog) {
