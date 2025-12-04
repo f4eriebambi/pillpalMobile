@@ -6,6 +6,7 @@ import com.example.pillpalmobile.model.ProfileResponse
 import com.example.pillpalmobile.model.RegisterRequest
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -27,6 +28,12 @@ interface AuthService {
         @Header("Authorization") authHeader: String
     ): Response<ProfileResponse>
 
+    @DELETE("api/auth/delete")
+    suspend fun deleteAccount(
+        @Header("Authorization") token: String
+    ): Response<Unit>
+
+
 }
 
 
@@ -42,3 +49,5 @@ data class LoginResponse(
 data class AuthResponse(
     val token: String
 )
+
+data class DeleteResponse(val status: String?)

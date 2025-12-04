@@ -228,8 +228,43 @@ fun AppNavGraph(navController: NavHostController) {
 
 
             composable("settings") {
-                SettingsScreen(navController)
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+
+                SettingsScreen(
+                    navController = navController,
+
+                    onLogoutConfirm = {
+                        scope.launch {
+                            AuthStore.clearToken(context)
+                            navController.navigate("login") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }
+                    },
+
+                    onDeleteAccountConfirm = {
+                        scope.launch {
+                            val token = AuthStore.getToken(context)
+
+                            if (token != null) {
+                                try {
+                                    RetrofitClient.authService.deleteAccount("Bearer $token")
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+
+                            AuthStore.clearToken(context)
+
+                            navController.navigate("signup") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }
+                    }
+                )
             }
+
 
             composable("history") {
                 HistoryScreen(navController)
