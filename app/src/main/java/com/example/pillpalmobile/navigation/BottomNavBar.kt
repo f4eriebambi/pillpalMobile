@@ -1,5 +1,6 @@
 package com.example.pillpalmobile.navigation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
 import com.example.pillpalmobile.R
 import com.example.pillpalmobile.Montserrat
 
@@ -30,28 +32,28 @@ fun BottomNavBar(navController: NavHostController, current: String) {
     ) {
 
         NavItem(
-            iconRes = R.drawable.home,
+            iconUrl = "https://cdn-icons-png.flaticon.com/128/8370/8370951.png",
             label = "home",
             selected = current == "home",
             onClick = { navController.navigate("home") }
         )
 
         NavItem(
-            iconRes = R.drawable.history,
+            iconUrl = "https://cdn-icons-png.flaticon.com/128/8690/8690853.png",
             label = "history",
             selected = current == "history",
             onClick = { navController.navigate("history") }
         )
 
         NavItem(
-            iconRes = R.drawable.add_calendar,
+            iconUrl = "https://cdn-icons-png.flaticon.com/128/2886/2886665.png",
             label = "calendar",
             selected = current == "calendar",
             onClick = { navController.navigate("calendar") }
         )
 
         NavItem(
-            iconRes = R.drawable.user_settings,
+            iconUrl = "https://cdn-icons-png.flaticon.com/512/9623/9623115.png",
             label = "settings",
             selected = current == "settings",
             onClick = { navController.navigate("settings") }
@@ -61,7 +63,7 @@ fun BottomNavBar(navController: NavHostController, current: String) {
 
 @Composable
 fun NavItem(
-    iconRes: Int,
+    iconUrl: String,
     label: String,
     selected: Boolean,
     onClick: () -> Unit
@@ -83,15 +85,14 @@ fun NavItem(
                 .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                painter = painterResource(id = iconRes),
+            Image(
+                painter = rememberAsyncImagePainter(iconUrl),
                 contentDescription = null,
-                modifier = Modifier.size(36.dp),
-                tint = Color.Unspecified
+                modifier = Modifier.size(32.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
             text = label,

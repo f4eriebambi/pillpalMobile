@@ -56,6 +56,7 @@ import com.example.pillpalmobile.navigation.AppNavGraph
 import com.example.pillpalmobile.navigation.BottomNavBar
 import com.example.pillpalmobile.network.RetrofitClient
 import kotlinx.coroutines.launch
+import coil.compose.rememberAsyncImagePainter
 
 
 // https://developer.android.com/develop/ui/views/text-and-emoji/fonts-in-xml
@@ -302,12 +303,16 @@ fun ProfileCard(user: User) {
                             .background(Color.White)
                     ) {
                         Image(
-                            painter = painterResource(user.avatarRes),
-                            contentDescription = null,
+                            painter = rememberAsyncImagePainter(
+                                model = "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/bf/9a/35/bf9a3503-7edf-284e-c8ad-502415ad927a/iMessage_App_Icon-0-0-1x_U007emarketing-0-0-85-181.png/512x512bb.jpg",
+                                placeholder = painterResource(R.drawable.pfp),
+                                error = painterResource(R.drawable.pfp)
+                            ),
+                            contentDescription = "Profile Image",
                             modifier = Modifier
                                 .size(width = 90.dp, height = 88.dp)
                                 .align(Alignment.Center),
-                            contentScale = ContentScale.Fit
+                            contentScale = ContentScale.Crop
                         )
                     }
 //                    Spacer(modifier = Modifier.height(6.dp))
