@@ -25,7 +25,10 @@ import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.MedicationDisplay
 import com.example.pillpalmobile.navigation.BottomNavBar
 import com.example.pillpalmobile.network.RetrofitClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -119,10 +122,12 @@ fun CalendarScreen(
                     dayDoses = dayDoses,
                     selectedDate = selectedDate.value,
                     onMarkTaken = { dose, newState ->
-                        scope.launch {
-                            updateDoseStatus(dose.instanceId, newState, context) {
-                                reloadDayDoses()
-                                }
+                        updateDoseStatus(
+                            instanceId = dose.instanceId,
+                            newState = newState,
+                            context = context
+                        ) {
+                            reloadDayDoses()
                         }
                     }
                 )
@@ -180,31 +185,41 @@ fun CalendarScreen(
 // MARK TAKEN -> API CALL
 // ---------------------------------------------------------
 
-suspend fun updateDoseStatus(
+fun updateDoseStatus(
     instanceId: Int,
     newState: Boolean,
     context: Context,
-    onComplete: suspend () -> Unit
+    onComplete: () -> Unit
 ) {
-    val token = AuthStore.getToken(context) ?: return
-    val status = if (newState) "taken" else "missed"
 
-    Log.d("CALENDAR", "Updating instance $instanceId → $status")
+    // Run everything inside IO coroutine
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            // getToken is suspend → MUST run inside coroutine
+            val token = AuthStore.getToken(context) ?: return@launch
 
-    try {
-        RetrofitClient.calendarService.updateDoseStatus(
-            "Bearer $token",
-            mapOf<String, Any>(
-                "instance_id" to instanceId,
-                "status" to status
+            val status = if (newState) "taken" else "missed"
+            Log.d("CALENDAR", "Updating instance $instanceId → $status")
+
+            RetrofitClient.calendarService.updateDoseStatus(
+                "Bearer $token",
+                mapOf(
+                    "instance_id" to instanceId,
+                    "status" to status
+                )
             )
-        )
 
-        onComplete()
-    } catch (e: Exception) {
-        Log.e("CALENDAR", "Status update failed", e)
+            // Switch back to Main for UI
+            withContext(Dispatchers.Main) {
+                onComplete()
+            }
+
+        } catch (e: Exception) {
+            Log.e("CALENDAR", "Status update failed", e)
+        }
     }
 }
+
 
 
 // ---------------------------------------------------------

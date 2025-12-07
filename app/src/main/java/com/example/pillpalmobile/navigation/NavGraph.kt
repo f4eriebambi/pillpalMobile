@@ -1,5 +1,6 @@
 package com.example.pillpalmobile.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -11,24 +12,20 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.pillpalmobile.*
+import com.example.pillpalmobile.R
 import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
 import com.example.pillpalmobile.network.RetrofitClient
-import kotlinx.coroutines.launch
-import com.example.pillpalmobile.R
-import com.example.pillpalmobile.model.MedicationResponse
-import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.screens.SettingsScreen
 import com.example.pillpalmobile.HistoryScreen
 import com.example.pillpalmobile.CalendarScreen
-import androidx.compose.ui.platform.LocalContext
-import android.util.Log
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
     val context = LocalContext.current
     var startDestination by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         val token = AuthStore.getToken(context)
@@ -66,18 +63,16 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
 
-// HOME
+            // HOME
             composable("home") {
                 var user by remember { mutableStateOf<User?>(null) }
                 var medications by remember { mutableStateOf<List<Medication>>(emptyList()) }
                 var isMedLoading by remember { mutableStateOf(true) }
 
                 val ctx = LocalContext.current
-                val coroutine = rememberCoroutineScope()
+                val coroutineScope = rememberCoroutineScope()
 
-                // ---------------------------
-                // LOAD USER PROFILE
-                // ---------------------------
+                // Load user profile once when Home composable is created
                 LaunchedEffect(Unit) {
                     val token = AuthStore.getToken(ctx)
                     if (token != null) {
@@ -85,7 +80,8 @@ fun AppNavGraph(navController: NavHostController) {
                             val res = RetrofitClient.authService.getProfile("Bearer $token")
                             if (res.isSuccessful) {
                                 res.body()?.let { data ->
-                                    val firstName = data.full_name?.split(" ")?.firstOrNull() ?: "User"
+                                    val firstName =
+                                        data.full_name?.split(" ")?.firstOrNull() ?: "User"
                                     user = User(
                                         name = firstName,
                                         birthday = data.birthday ?: "N/A",
@@ -99,14 +95,13 @@ fun AppNavGraph(navController: NavHostController) {
                     }
                 }
 
-                // ---------------------------
-                // LOAD MEDICATIONS + MAP TO UI MODEL
-                // ---------------------------
+                // Load medications when Home composable is created
                 LaunchedEffect(Unit) {
                     val token = AuthStore.getToken(ctx)
                     if (token != null) {
                         try {
-                            val apiMeds = RetrofitClient.medicationService.getMedications("Bearer $token")
+                            val apiMeds =
+                                RetrofitClient.medicationService.getMedications("Bearer $token")
 
                             medications = apiMeds.map { med ->
                                 val schedule = med.schedule
@@ -137,8 +132,6 @@ fun AppNavGraph(navController: NavHostController) {
                     isMedLoading = false
                 }
 
-                // ---------------------------
-                // RENDER HOME
                 if (user != null) {
                     HomeScreen(
                         user = user!!,
@@ -146,7 +139,7 @@ fun AppNavGraph(navController: NavHostController) {
                         isMedicationLoading = isMedLoading,
                         navController = navController,
                         onLogout = {
-                            coroutine.launch {
+                            coroutineScope.launch {
                                 AuthStore.clearToken(ctx)
                                 navController.navigate("login") {
                                     popUpTo("home") { inclusive = true }
@@ -164,11 +157,12 @@ fun AppNavGraph(navController: NavHostController) {
                 }
             }
 
-
             // EDIT MEDICATION
             composable("edit_med/{medId}") { backStackEntry ->
                 val medId = backStackEntry.arguments?.getString("medId")?.toIntOrNull()
                 val ctx = LocalContext.current
+                val scope = rememberCoroutineScope()
+
                 var medication by remember { mutableStateOf<Medication?>(null) }
                 var isLoading by remember { mutableStateOf(true) }
 
@@ -200,7 +194,8 @@ fun AppNavGraph(navController: NavHostController) {
                                     notes = res.notes ?: ""
                                 )
                             }
-                        } catch (_: Exception) {}
+                        } catch (_: Exception) {
+                        }
                     }
 
                     isLoading = false
@@ -217,32 +212,57 @@ fun AppNavGraph(navController: NavHostController) {
                     EditMedicationScreen(
                         medication = medication,
                         onNavigateBack = { navController.popBackStack() },
-                        onDelete = { navController.popBackStack() },
-                        onSave = { navController.popBackStack() }
+                        onDelete = { medIdToDelete ->
+                            scope.launch {
+                                val token = AuthStore.getToken(ctx) ?: return@launch
+                                try {
+                                    val res =
+                                        RetrofitClient.medicationService.deleteMedication(
+                                            "Bearer $token",
+                                            medIdToDelete
+                                        )
+
+                                    if (res.isSuccessful) {
+                                        // Go back to a FRESH Home, which will reload meds
+                                        navController.navigate("home") {
+                                            popUpTo("home") { inclusive = true }
+                                        }
+                                    } else {
+                                        Log.e(
+                                            "APP",
+                                            "Delete failed: ${res.code()} ${res.message()}"
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("APP", "Delete error", e)
+                                }
+                            }
+                        },
+                        onSave = {
+                            navController.popBackStack()
+                        }
                     )
                 }
             }
 
-
+            // SETTINGS
             composable("settings") {
-                val context = LocalContext.current
+                val ctx = LocalContext.current
                 val scope = rememberCoroutineScope()
 
                 SettingsScreen(
                     navController = navController,
-
                     onLogoutConfirm = {
                         scope.launch {
-                            AuthStore.clearToken(context)
+                            AuthStore.clearToken(ctx)
                             navController.navigate("login") {
                                 popUpTo("home") { inclusive = true }
                             }
                         }
                     },
-
                     onDeleteAccountConfirm = {
                         scope.launch {
-                            val token = AuthStore.getToken(context)
+                            val token = AuthStore.getToken(ctx)
 
                             if (token != null) {
                                 try {
@@ -252,7 +272,7 @@ fun AppNavGraph(navController: NavHostController) {
                                 }
                             }
 
-                            AuthStore.clearToken(context)
+                            AuthStore.clearToken(ctx)
 
                             navController.navigate("signup") {
                                 popUpTo("home") { inclusive = true }
@@ -262,11 +282,12 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
 
-
+            // HISTORY
             composable("history") {
                 HistoryScreen(navController)
             }
 
+            // CALENDAR
             composable("calendar") {
                 CalendarScreen(
                     navController = navController,
@@ -274,14 +295,12 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
 
-
+            // ADD MEDICATION
             composable("add_medication") {
                 AddMedicationScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-
-
         }
     }
 }
