@@ -31,7 +31,7 @@ import java.util.*
 import androidx.navigation.NavHostController
 import com.example.pillpalmobile.data.AuthStore
 import com.example.pillpalmobile.navigation.BottomNavBar
-import com.example.pillpalmobile.network.HistoryAPIResponse
+import com.example.pillpalmobile.model.HistoryAPIResponse
 import com.example.pillpalmobile.network.RetrofitClient
 import androidx.navigation.compose.currentBackStackEntryAsState
 

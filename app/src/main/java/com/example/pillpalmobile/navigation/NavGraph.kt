@@ -270,10 +270,17 @@ fun AppNavGraph(navController: NavHostController) {
             composable("calendar") {
                 CalendarScreen(
                     navController = navController,
-                    medications = emptyList(),
-                    onAddMedication = { navController.navigate("add_med") }
+                    onAddMedication = { navController.navigate("add_medication") }
                 )
             }
+
+
+            composable("add_medication") {
+                AddMedicationScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
 
         }
     }
