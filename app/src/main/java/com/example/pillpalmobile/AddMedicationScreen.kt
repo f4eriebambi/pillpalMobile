@@ -37,13 +37,13 @@ fun AddMedicationScreen(
 
     // medication name
     var name by remember { mutableStateOf("") }
-    var showCancelDialog by remember { mutableStateOf(false) }
+    var showAddCancelDialog by remember { mutableStateOf(false) }
 
     // time picker section
     var times by remember { mutableStateOf(mutableStateListOf("10:00")) }
     var activeTimeIndex by remember { mutableStateOf(0) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var showRemoveTimeDialog by remember { mutableStateOf(-1) }
+    var showAddRemoveTimeDialog by remember { mutableStateOf(-1) }
 
     // repeat section
     var repeatEnabled by remember { mutableStateOf(false) }
@@ -68,8 +68,8 @@ fun AddMedicationScreen(
     var notes by remember { mutableStateOf("") }
 
     // save
-    var showSaveConfirmDialog by remember { mutableStateOf(false) }
-    var showSaveSuccessDialog by remember { mutableStateOf(false) }
+    var showAddSaveConfirmDialog by remember { mutableStateOf(false) }
+    var showAddSaveSuccessDialog by remember { mutableStateOf(false) }
 
     // validation - name must not be empty
     val canSave = name.isNotBlank()
@@ -107,7 +107,7 @@ fun AddMedicationScreen(
                         activeTimeIndex = times.size - 1
                     }
                 },
-                onRemoveTime = { showRemoveTimeDialog = it }
+                onRemoveTime = { showAddRemoveTimeDialog = it }
             )
 
             TimePickerModal(
@@ -214,7 +214,7 @@ fun AddMedicationScreen(
             AddHeaderSection(
                 name = name,
                 onNameChange = { name = it },
-                onCancelClick = { showCancelDialog = true }
+                onCancelClick = { showAddCancelDialog = true }
             )
         }
 
@@ -225,42 +225,42 @@ fun AddMedicationScreen(
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
         ) {
-            AddMedicationSaveButton(
+            AddSaveButton(
                 enabled = canSave,
-                onClick = { showSaveConfirmDialog = true }
+                onClick = { showAddSaveConfirmDialog = true }
             )
         }
 
         // cancel dialog
-        CancelDialog(
-            showDialog = showCancelDialog,
-            onDismiss = { showCancelDialog = false },
+        AddCancelDialog(
+            showDialog = showAddCancelDialog,
+            onDismiss = { showAddCancelDialog = false },
             onConfirm = {
-                showCancelDialog = false
+                showAddCancelDialog = false
                 onNavigateBack()
             }
         )
 
         // remove time dialog
-        RemoveTimeDialog(
-            showDialog = showRemoveTimeDialog >= 0,
-            onDismiss = { showRemoveTimeDialog = -1 },
+        AddRemoveTimeDialog(
+            showDialog = showAddRemoveTimeDialog >= 0,
+            onDismiss = { showAddRemoveTimeDialog = -1 },
             onConfirm = {
-                val indexToRemove = showRemoveTimeDialog
+                val indexToRemove = showAddRemoveTimeDialog
                 times.removeAt(indexToRemove)
                 if (activeTimeIndex >= times.size) {
                     activeTimeIndex = times.size - 1
                 }
-                showRemoveTimeDialog = -1
+                showAddRemoveTimeDialog = -1
             }
         )
 
         // save confirmation dialog
-        SaveConfirmDialog(
-            showDialog = showSaveConfirmDialog,
-            onDismiss = { showSaveConfirmDialog = false },
+        AddSaveConfirmDialog(
+            showDialog = showAddSaveConfirmDialog,
+            onDismiss = { showAddSaveConfirmDialog = false },
             onConfirm = {
-                showSaveConfirmDialog = false
+                showAddSaveConfirmDialog = false
 
                 val weeklyDays = if (howOften == "Weekly") {
                     val dayNames = listOf("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
@@ -280,16 +280,16 @@ fun AddMedicationScreen(
                     notes
                 )
 
-                showSaveSuccessDialog = true
+                showAddSaveSuccessDialog = true
             }
         )
 
         // save success dialog
-        SaveSuccessDialog(
-            showDialog = showSaveSuccessDialog,
-            onDismiss = { showSaveSuccessDialog = false },
+        AddSaveSuccessDialog(
+            showDialog = showAddSaveSuccessDialog,
+            onDismiss = { showAddSaveSuccessDialog = false },
             onConfirm = {
-                showSaveSuccessDialog = false
+                showAddSaveSuccessDialog = false
                 onNavigateBack()
             }
         )
@@ -387,7 +387,7 @@ fun AddHeaderSection(
 }
 
 @Composable
-fun AddMedicationSaveButton(
+fun AddSaveButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
@@ -410,6 +410,322 @@ fun AddMedicationSaveButton(
             fontFamily = Montserrat,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFFF16F33)
+        )
+    }
+}
+
+@Composable
+fun AddCancelDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    TextButton(
+                        onClick = onConfirm,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "yes",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "cancel",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+            },
+            title = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Discard medication?",
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        fontSize = 22.sp,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                }
+            },
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Are you sure you want to leave without \nsaving?",
+                        textAlign = TextAlign.Center,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun AddRemoveTimeDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    TextButton(
+                        onClick = onConfirm,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "yes",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "cancel",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+            },
+            title = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Remove Time?",
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        fontSize = 22.sp,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                }
+            },
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Are you sure you want to remove this\nreminder time?",
+                        textAlign = TextAlign.Center,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun AddSaveConfirmDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    TextButton(
+                        onClick = onConfirm,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "yes",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "cancel",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+            },
+            title = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Add medication?",
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        fontSize = 22.sp,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                }
+            },
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Are you sure you want to add \nthis medication?",
+                        textAlign = TextAlign.Center,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun AddSaveSuccessDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextButton(
+                        onClick = onConfirm,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "ok",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+            },
+            title = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                ) {
+                    Text(
+                        text = "Medication Added!",
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                ) {
+                    Text(
+                        text = "Your medication has been\nsuccessfully added.",
+                        textAlign = TextAlign.Center,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp
+                    )
+                }
+            }
         )
     }
 }
