@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +29,10 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
 import androidx.navigation.NavHostController
+import com.example.pillpalmobile.data.AuthStore
 import com.example.pillpalmobile.navigation.BottomNavBar
+import com.example.pillpalmobile.network.HistoryAPIResponse
+import com.example.pillpalmobile.network.RetrofitClient
 
 /**
  * BACKEND will dp:
@@ -85,9 +89,25 @@ fun HistoryScreen(
 //    val testStreak = 7 // commenting after im done testing
 
     // generate history from med data
-    val historyData = remember(medications) {
-        generateHistoryFromMedications(medications)
+    val context = LocalContext.current
+    var historyData by remember { mutableStateOf<List<DayHistory>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val token = AuthStore.getToken(context)
+            if (token != null) {
+                val response = RetrofitClient.historyService.getHistory(
+                    authHeader = "Bearer $token"
+                )
+                historyData = response.toDayHistoryList()
+            }
+        } catch (e: Exception) {
+            println("Error loading history: $e")
+        }
+        isLoading = false
     }
+
 
     Box(
         modifier = Modifier
@@ -607,3 +627,28 @@ fun StatusBadge(status: HistoryStatus, isAllMedicationsCard: Boolean) {
 //        )
 //    }
 //}
+
+fun List<HistoryAPIResponse>.toDayHistoryList(): List<DayHistory> {
+    return this.map { day ->
+        val date = LocalDate.parse(day.date)
+
+        val entries = day.medications.map { med ->
+            MedicationHistoryEntry(
+                medicationName = med.name,
+                scheduledTime = med.scheduledTime,
+                status = when (med.status.lowercase()) {
+                    "taken" -> HistoryStatus.TAKEN
+                    "missed" -> HistoryStatus.MISSED
+                    else -> HistoryStatus.UPCOMING
+                }
+            )
+        }
+
+        DayHistory(
+            date = date,
+            entries = entries,
+            allTaken = entries.all { it.status == HistoryStatus.TAKEN }
+        )
+    }
+}
+

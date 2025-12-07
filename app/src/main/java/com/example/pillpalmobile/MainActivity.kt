@@ -129,7 +129,7 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
 @Composable
 fun HomeScreen(
     user: User,
-    medications: List<MedicationResponse>,
+    medications: List<Medication>,
     isMedicationLoading: Boolean,
     navController: NavHostController,
     onLogout: () -> Unit = {}
@@ -165,8 +165,9 @@ fun HomeScreen(
                 ) {
                     CircularProgressIndicator()
                 }
+
             } else {
-                MedicationSectionFromNetwork(
+                MedicationSection(
                     medications = medications,
                     navController = navController
                 )
@@ -478,20 +479,26 @@ fun MedicationSection(
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    val paddedList = medications + List(maxOf(0, 6 - medications.size)) {
+                    val realMeds = medications
+
+                    val placeholderCount = maxOf(0, 6 - realMeds.size)
+
+                    val placeholders = List(placeholderCount) {
                         Medication(
                             id = -1,
-                            name = "Medication",
-                            reminderTimes = listOf(""),
+                            name = "No Medication",
+                            reminderTimes = emptyList(),
                             medicationDate = "",
                             repeatEnabled = false
                         )
                     }
 
-                    paddedList.forEach { med ->
+                    val displayList = realMeds + placeholders
+
+                    displayList.forEach { med ->
                         MedicationRowUnified(
                             name = med.name,
-                            isPlaceholder = (med.id == -1),
+                            isPlaceholder = med.id == -1,
                             onClick = {
                                 if (med.id != -1) {
                                     navController.navigate("edit_med/${med.id}")
@@ -524,39 +531,39 @@ fun MedicationSection(
 
 
 
-@Composable
-fun MedicationSectionFromNetwork(
-    medications: List<MedicationResponse>,
-    navController: NavHostController
-) {
-    val mappedMeds = medications.map { med ->
-
-        val schedule = med.schedule
-
-        Medication(
-            id = med.med_id,
-            name = med.name,
-            reminderTimes = schedule?.times ?: emptyList(),
-            medicationDate = med.active_start_date ?: "",
-            repeatEnabled = schedule?.repeat_type != null,
-            repeatFrequency = when (schedule?.repeat_type) {
-                "daily" -> "Daily"
-                "weekly" -> "Weekly"
-                "custom" -> "Custom"
-                else -> "Daily"
-            },
-            repeatDays = decodeDayMask(schedule?.day_mask),
-            repeatStartDate = schedule?.custom_start.toEpochMillis(),
-            repeatEndDate = schedule?.custom_end.toEpochMillis(),
-            notes = med.notes ?: ""
-        )
-    }
-
-    MedicationSection(
-        medications = mappedMeds,
-        navController = navController
-    )
-}
+//@Composable
+//fun MedicationSectionFromNetwork(
+//    medications: List<Medication>,
+//    navController: NavHostController
+//) {
+//    val mappedMeds = medications.map { med ->
+//
+////        val schedule = med.schedule
+//
+////        Medication(
+////            id = med.med_id,
+////            name = med.name,
+////            reminderTimes = schedule?.times ?: emptyList(),
+////            medicationDate = med.active_start_date ?: "",
+////            repeatEnabled = schedule?.repeat_type != null,
+////            repeatFrequency = when (schedule?.repeat_type) {
+////                "daily" -> "Daily"
+////                "weekly" -> "Weekly"
+////                "custom" -> "Custom"
+////                else -> "Daily"
+////            },
+////            repeatDays = decodeDayMask(schedule?.day_mask),
+////            repeatStartDate = schedule?.custom_start.toEpochMillis(),
+////            repeatEndDate = schedule?.custom_end.toEpochMillis(),
+////            notes = med.notes ?: ""
+////        )
+//    }
+//
+//    MedicationSection(
+//        medications = mappedMeds,
+//        navController = navController
+//    )
+//}
 
 fun String?.toEpochMillis(): Long? {
     if (this.isNullOrBlank()) return null

@@ -21,6 +21,8 @@ import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.screens.SettingsScreen
 import com.example.pillpalmobile.HistoryScreen
 import com.example.pillpalmobile.CalendarScreen
+import androidx.compose.ui.platform.LocalContext
+import android.util.Log
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -64,85 +66,79 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
 
-            // HOME
+// HOME
             composable("home") {
                 var user by remember { mutableStateOf<User?>(null) }
-                var medications by remember { mutableStateOf<List<MedicationResponse>>(emptyList()) }
+                var medications by remember { mutableStateOf<List<Medication>>(emptyList()) }
                 var isMedLoading by remember { mutableStateOf(true) }
 
                 val ctx = LocalContext.current
                 val coroutine = rememberCoroutineScope()
 
-                // LOAD USER
+                // ---------------------------
+                // LOAD USER PROFILE
+                // ---------------------------
                 LaunchedEffect(Unit) {
-                    try {
-                        val token = AuthStore.getToken(ctx)
-                        if (token != null) {
-
-                            val response = RetrofitClient.authService.getProfile("Bearer $token")
-
-                            if (response.isSuccessful) {
-                                val data = response.body()
-                                if (data != null) {
-
-                                    val firstName = data.full_name
-                                        ?.split(" ")
-                                        ?.firstOrNull()
-                                        ?.ifBlank { "User" }
-                                        ?: "User"
-
-                                    val formattedBirthday = try {
-                                        val formats = listOf(
-                                            "yyyy-MM-dd",
-                                            "yyyy-MM-dd HH:mm:ss",
-                                            "EEE MMM dd HH:mm:ss zzz yyyy",
-                                            "yyyy-MM-dd'T'HH:mm:ss'Z'"
-                                        )
-                                        val outFormat = java.text.SimpleDateFormat("dd/MM/yy")
-
-                                        var parsed: java.util.Date? = null
-
-                                        for (f in formats) {
-                                            try {
-                                                parsed = java.text.SimpleDateFormat(f)
-                                                    .parse(data.birthday)
-                                                if (parsed != null) break
-                                            } catch (_: Exception) {}
-                                        }
-
-                                        parsed?.let { outFormat.format(it) }
-                                            ?: data.birthday ?: "N/A"
-
-                                    } catch (_: Exception) {
-                                        data.birthday ?: "N/A"
-                                    }
-
+                    val token = AuthStore.getToken(ctx)
+                    if (token != null) {
+                        try {
+                            val res = RetrofitClient.authService.getProfile("Bearer $token")
+                            if (res.isSuccessful) {
+                                res.body()?.let { data ->
+                                    val firstName = data.full_name?.split(" ")?.firstOrNull() ?: "User"
                                     user = User(
                                         name = firstName,
-                                        birthday = formattedBirthday,
+                                        birthday = data.birthday ?: "N/A",
                                         avatarRes = R.drawable.pfp
                                     )
                                 }
                             }
-
+                        } catch (e: Exception) {
+                            Log.e("APP", "User load error: $e")
                         }
-                    } catch (_: Exception) {}
+                    }
                 }
 
-                // LOAD MEDICATIONS
+                // ---------------------------
+                // LOAD MEDICATIONS + MAP TO UI MODEL
+                // ---------------------------
                 LaunchedEffect(Unit) {
-                    try {
-                        val token = AuthStore.getToken(ctx)
-                        if (token != null) {
-                            medications = RetrofitClient.medicationService
-                                .getMedications("Bearer $token")
+                    val token = AuthStore.getToken(ctx)
+                    if (token != null) {
+                        try {
+                            val apiMeds = RetrofitClient.medicationService.getMedications("Bearer $token")
+
+                            medications = apiMeds.map { med ->
+                                val schedule = med.schedule
+                                Medication(
+                                    id = med.med_id,
+                                    name = med.name,
+                                    reminderTimes = schedule?.times ?: emptyList(),
+                                    medicationDate = med.active_start_date ?: "",
+                                    repeatEnabled = schedule?.repeat_type != null,
+                                    repeatFrequency = when (schedule?.repeat_type) {
+                                        "daily" -> "Daily"
+                                        "weekly" -> "Weekly"
+                                        "custom" -> "Custom"
+                                        else -> "Daily"
+                                    },
+                                    repeatDays = decodeDayMask(schedule?.day_mask),
+                                    repeatStartDate = schedule?.custom_start.toEpochMillis(),
+                                    repeatEndDate = schedule?.custom_end.toEpochMillis(),
+                                    notes = med.notes ?: ""
+                                )
+                            }
+
+                        } catch (e: Exception) {
+                            Log.e("APP", "Medication error: $e")
                         }
-                    } catch (e: Exception) {
-                        println("Med error: $e")
                     }
+
                     isMedLoading = false
                 }
 
+                // ---------------------------
+                // RENDER HOME
                 if (user != null) {
                     HomeScreen(
                         user = user!!,
@@ -167,6 +163,7 @@ fun AppNavGraph(navController: NavHostController) {
                     }
                 }
             }
+
 
             // EDIT MEDICATION
             composable("edit_med/{medId}") { backStackEntry ->
