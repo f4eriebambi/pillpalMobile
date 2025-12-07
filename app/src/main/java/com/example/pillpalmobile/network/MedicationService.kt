@@ -4,6 +4,11 @@ import com.example.pillpalmobile.model.MedicationResponse
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
+import retrofit2.http.POST
+import retrofit2.http.Body
+import retrofit2.Response
+
+
 
 interface MedicationService {
 
@@ -17,4 +22,11 @@ interface MedicationService {
         @Header("Authorization") token: String,
         @Path("id") medId: Int
     ): MedicationResponse
+
+    @POST("api/medications")
+    suspend fun createMedication(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, Any?>
+    ): Response<Unit>
+
 }

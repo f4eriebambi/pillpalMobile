@@ -116,7 +116,7 @@ private fun List<Medication>.filterForDate(selectedDate: LocalDate): List<Medica
 fun CalendarScreen(
     navController: NavHostController,
     medications: List<Medication> = emptyList(),
-    onAddMedication: () -> Unit = {}
+    onAddMedication: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val currentDate = remember { LocalDate.now() }
