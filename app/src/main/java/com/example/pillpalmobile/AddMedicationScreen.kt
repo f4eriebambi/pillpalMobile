@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -24,26 +25,32 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.network.AddMedicationRequest
+import com.example.pillpalmobile.network.RetrofitClient
+import com.example.pillpalmobile.network.ScheduleRequest
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMedicationScreen(
-    onNavigateBack: () -> Unit = {},
-    onSave: (String, List<String>, Boolean, String, List<String>, Long?, Long?, String) -> Unit = { _, _, _, _, _, _, _, _ -> }
+    onNavigateBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
     // medication name
     var name by remember { mutableStateOf("") }
-    var showAddCancelDialog by remember { mutableStateOf(false) }
+    var showCancelDialog by remember { mutableStateOf(false) }
 
     // time picker section
     var times by remember { mutableStateOf(mutableStateListOf("10:00")) }
     var activeTimeIndex by remember { mutableStateOf(0) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var showAddRemoveTimeDialog by remember { mutableStateOf(-1) }
+    var showRemoveTimeDialog by remember { mutableStateOf(-1) }
 
     // repeat section
     var repeatEnabled by remember { mutableStateOf(false) }
@@ -67,12 +74,78 @@ fun AddMedicationScreen(
     // notes
     var notes by remember { mutableStateOf("") }
 
-    // save
-    var showAddSaveConfirmDialog by remember { mutableStateOf(false) }
-    var showAddSaveSuccessDialog by remember { mutableStateOf(false) }
+    // save dialogs and error handling
+    var showSaveConfirmDialog by remember { mutableStateOf(false) }
+    var showSaveSuccessDialog by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     // validation - name must not be empty
     val canSave = name.isNotBlank()
+
+    // function to save medication to backend
+    fun saveMedicationToBackend() {
+        scope.launch {
+            try {
+                val token = AuthStore.getToken(context)
+                if (token == null) {
+                    errorMessage = "Not authenticated. Please log in again."
+                    showErrorDialog = true
+                    return@launch
+                }
+
+                // prepare day mask for weekly repeat
+                val dayMask = if (howOften == "Weekly") {
+                    selectedDays.joinToString("") { if (it) "1" else "0" }
+                } else null
+
+                // convert dates to yyyy-MM-dd format for backend
+                val customStart = if (howOften == "Custom" && startDateValue != null) {
+                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(startDateValue!!))
+                } else null
+
+                val customEnd = if (howOften == "Custom" && endDateValue != null) {
+                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(endDateValue!!))
+                } else null
+
+                val scheduleRequest = ScheduleRequest(
+                    repeat_type = when {
+                        !repeatEnabled -> "once"
+                        howOften == "Daily" -> "daily"
+                        howOften == "Weekly" -> "weekly"
+                        howOften == "Custom" -> "custom"
+                        else -> "daily"
+                    },
+                    day_mask = dayMask,
+                    times = times.toList(),
+                    custom_start = customStart,
+                    custom_end = customEnd
+                )
+
+                val request = AddMedicationRequest(
+                    name = name,
+                    notes = notes.ifBlank { null },
+                    schedule = scheduleRequest
+                )
+
+                val response = RetrofitClient.medicationService.addMedication(
+                    token = "Bearer $token",
+                    medication = request
+                )
+
+                if (response.isSuccessful) {
+                    showSaveSuccessDialog = true
+                } else {
+                    errorMessage = "Failed to add medication: ${response.code()}"
+                    showErrorDialog = true
+                }
+
+            } catch (e: Exception) {
+                errorMessage = "Network error: ${e.message}"
+                showErrorDialog = true
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -107,7 +180,7 @@ fun AddMedicationScreen(
                         activeTimeIndex = times.size - 1
                     }
                 },
-                onRemoveTime = { showAddRemoveTimeDialog = it }
+                onRemoveTime = { showRemoveTimeDialog = it }
             )
 
             TimePickerModal(
@@ -214,7 +287,7 @@ fun AddMedicationScreen(
             AddHeaderSection(
                 name = name,
                 onNameChange = { name = it },
-                onCancelClick = { showAddCancelDialog = true }
+                onCancelClick = { showCancelDialog = true }
             )
         }
 
@@ -227,71 +300,59 @@ fun AddMedicationScreen(
         ) {
             AddSaveButton(
                 enabled = canSave,
-                onClick = { showAddSaveConfirmDialog = true }
+                onClick = { showSaveConfirmDialog = true }
             )
         }
 
         // cancel dialog
         AddCancelDialog(
-            showDialog = showAddCancelDialog,
-            onDismiss = { showAddCancelDialog = false },
+            showDialog = showCancelDialog,
+            onDismiss = { showCancelDialog = false },
             onConfirm = {
-                showAddCancelDialog = false
+                showCancelDialog = false
                 onNavigateBack()
             }
         )
 
         // remove time dialog
         AddRemoveTimeDialog(
-            showDialog = showAddRemoveTimeDialog >= 0,
-            onDismiss = { showAddRemoveTimeDialog = -1 },
+            showDialog = showRemoveTimeDialog >= 0,
+            onDismiss = { showRemoveTimeDialog = -1 },
             onConfirm = {
-                val indexToRemove = showAddRemoveTimeDialog
+                val indexToRemove = showRemoveTimeDialog
                 times.removeAt(indexToRemove)
                 if (activeTimeIndex >= times.size) {
                     activeTimeIndex = times.size - 1
                 }
-                showAddRemoveTimeDialog = -1
+                showRemoveTimeDialog = -1
             }
         )
 
         // save confirmation dialog
         AddSaveConfirmDialog(
-            showDialog = showAddSaveConfirmDialog,
-            onDismiss = { showAddSaveConfirmDialog = false },
+            showDialog = showSaveConfirmDialog,
+            onDismiss = { showSaveConfirmDialog = false },
             onConfirm = {
-                showAddSaveConfirmDialog = false
-
-                val weeklyDays = if (howOften == "Weekly") {
-                    val dayNames = listOf("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
-                    selectedDays.mapIndexedNotNull { index, isSelected ->
-                        if (isSelected) dayNames[index] else null
-                    }
-                } else emptyList()
-
-                onSave(
-                    name,
-                    times.toList(),
-                    repeatEnabled,
-                    if (repeatEnabled) howOften else "Daily",
-                    weeklyDays,
-                    if (howOften == "Custom") startDateValue else null,
-                    if (howOften == "Custom") endDateValue else null,
-                    notes
-                )
-
-                showAddSaveSuccessDialog = true
+                showSaveConfirmDialog = false
+                saveMedicationToBackend()
             }
         )
 
         // save success dialog
         AddSaveSuccessDialog(
-            showDialog = showAddSaveSuccessDialog,
-            onDismiss = { showAddSaveSuccessDialog = false },
+            showDialog = showSaveSuccessDialog,
+            onDismiss = { showSaveSuccessDialog = false },
             onConfirm = {
-                showAddSaveSuccessDialog = false
+                showSaveSuccessDialog = false
                 onNavigateBack()
             }
+        )
+
+        // error dialog
+        AddErrorDialog(
+            showDialog = showErrorDialog,
+            errorMessage = errorMessage,
+            onDismiss = { showErrorDialog = false }
         )
     }
 }
@@ -723,6 +784,74 @@ fun AddSaveSuccessDialog(
                         fontFamily = Montserrat,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun AddErrorDialog(
+    showDialog: Boolean,
+    errorMessage: String,
+    onDismiss: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .border(1.dp, Color.Black, RoundedCornerShape(15.dp))
+                            .background(Color.White, RoundedCornerShape(15.dp))
+                    ) {
+                        Text(
+                            text = "ok",
+                            fontFamily = Montserrat,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+            },
+            title = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                ) {
+                    Text(
+                        text = "Error",
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                        textAlign = TextAlign.Center,
+                        color = Color.Red
+                    )
+                }
+            },
+            text = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                ) {
+                    Text(
+                        text = errorMessage,
+                        textAlign = TextAlign.Center,
+                        fontFamily = Montserrat,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 18.sp
                     )
                 }
             }

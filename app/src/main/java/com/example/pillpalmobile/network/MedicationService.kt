@@ -1,6 +1,7 @@
 package com.example.pillpalmobile.network
 
 import com.example.pillpalmobile.model.MedicationResponse
+import retrofit2.Response
 import retrofit2.http.*
 
 interface MedicationService {
@@ -20,7 +21,7 @@ interface MedicationService {
     suspend fun addMedication(
         @Header("Authorization") token: String,
         @Body medication: AddMedicationRequest
-    ): MedicationResponse
+    ): Response<MedicationResponse>
 }
 
 data class AddMedicationRequest(
