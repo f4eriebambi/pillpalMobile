@@ -78,16 +78,21 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainApp() {
-    var showSplash by remember { mutableStateOf(true) }
+    // temporary, just to test only add screen for now
 
-    if (showSplash) {
-        SplashScreen {
-            showSplash = false
-        }
-    } else {
-        val navController = rememberNavController()
-        AppNavGraph(navController)
-    }
+    AddMedicationScreen(
+        onNavigateBack = { /* */ }
+    )
+//    var showSplash by remember { mutableStateOf(true) }
+//
+//    if (showSplash) {
+//        SplashScreen {
+//            showSplash = false
+//        }
+//    } else {
+//        val navController = rememberNavController()
+//        AppNavGraph(navController)
+//    }
 }
 
 
