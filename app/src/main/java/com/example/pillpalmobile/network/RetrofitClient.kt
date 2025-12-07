@@ -29,6 +29,10 @@ object RetrofitClient {
         retrofit.create(HistoryService::class.java)
     }
 
+    val calendarService: CalendarService by lazy {
+        retrofit.create(CalendarService::class.java)
+    }
+
 
 
 }

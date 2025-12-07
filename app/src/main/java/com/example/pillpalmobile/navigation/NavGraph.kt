@@ -268,8 +268,13 @@ fun AppNavGraph(navController: NavHostController) {
             }
 
             composable("calendar") {
-                CalendarScreen(navController)
+                CalendarScreen(
+                    navController = navController,
+                    medications = emptyList(),
+                    onAddMedication = { navController.navigate("add_med") }
+                )
             }
+
         }
     }
 }

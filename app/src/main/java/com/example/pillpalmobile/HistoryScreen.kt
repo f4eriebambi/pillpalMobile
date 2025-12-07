@@ -33,6 +33,7 @@ import com.example.pillpalmobile.data.AuthStore
 import com.example.pillpalmobile.navigation.BottomNavBar
 import com.example.pillpalmobile.network.HistoryAPIResponse
 import com.example.pillpalmobile.network.RetrofitClient
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 /**
  * BACKEND will dp:
@@ -85,27 +86,28 @@ fun HistoryScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    // HARDCODED TEST FOR STREAK - i changed to currentStreak parameter instead of testStreak after done testing
-//    val testStreak = 7 // commenting after im done testing
-
-    // generate history from med data
     val context = LocalContext.current
     var historyData by remember { mutableStateOf<List<DayHistory>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        try {
-            val token = AuthStore.getToken(context)
-            if (token != null) {
-                val response = RetrofitClient.historyService.getHistory(
-                    authHeader = "Bearer $token"
-                )
-                historyData = response.toDayHistoryList()
+// FIXED: Added import + no duplicate variable
+    val navBackStackEntry = navController.currentBackStackEntryAsState()
+
+    LaunchedEffect(navBackStackEntry.value) {
+        // only refresh when user navigates to history
+        if (navBackStackEntry.value?.destination?.route == "history") {
+            isLoading = true
+            try {
+                val token = AuthStore.getToken(context)
+                if (token != null) {
+                    val response = RetrofitClient.historyService.getHistory("Bearer $token")
+                    historyData = response.toDayHistoryList()
+                }
+            } catch (e: Exception) {
+                println("Error loading history: $e")
             }
-        } catch (e: Exception) {
-            println("Error loading history: $e")
+            isLoading = false
         }
-        isLoading = false
     }
 
 
