@@ -443,7 +443,7 @@ fun HistoryDateSection(dayHistory: DayHistory) {
             // show one "all medications" card for past days where everything was taken
             HistoryEntryCard(
                 entry = MedicationHistoryEntry(
-                    medicationName = "all medications taken",
+                    medicationName = "All Medications Taken",
                     scheduledTime = "",
                     status = HistoryStatus.TAKEN
                 ),
@@ -495,7 +495,7 @@ fun HistoryEntryCard(
                 // med name with formatting
                 Text(
                     text = if (entry.scheduledTime.isNotEmpty()) {
-                        "${entry.medicationName} — ${entry.scheduledTime}"
+                        "${entry.medicationName}: ${entry.scheduledTime}"
                     } else {
                         entry.medicationName
                     },
