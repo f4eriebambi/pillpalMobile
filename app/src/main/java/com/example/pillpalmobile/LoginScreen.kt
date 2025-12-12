@@ -8,15 +8,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,10 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-
-// https://medium.com/@emmanuelmuturia/how-to-mask-your-password-in-android-jetpack-compose-3a0deee6c15b
-
+import kotlinx.coroutines.launch
+import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.network.RetrofitClient
+import com.example.pillpalmobile.model.LoginRequest
 
 @Composable
 fun LoginScreen(
@@ -40,6 +37,12 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+
 
     Box(
         modifier = Modifier
@@ -53,7 +56,6 @@ fun LoginScreen(
                 .padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-//            Spacer(modifier = Modifier.height(48.dp))
             Spacer(modifier = Modifier.height(24.dp))
 
             Image(
@@ -87,10 +89,9 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(72.dp))
 
             Column(
-                modifier = Modifier
-                    .padding(horizontal = 10.dp)
+                modifier = Modifier.padding(horizontal = 10.dp)
             ) {
-                // enter email
+
                 Text(
                     text = "Email address",
                     fontSize = 20.sp,
@@ -105,39 +106,18 @@ fun LoginScreen(
                     value = email,
                     onValueChange = { email = it },
                     placeholder = {
-                        Text(
-                            text = "Email address",
-                            color = Color(0xFF828282),
-                            fontSize = 18.sp,
-                            fontFamily = Montserrat,
-                            fontWeight = FontWeight.Normal
-                        )
+                        Text("Email address", color = Color(0xFF828282), fontSize = 18.sp)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(
-                            width = 0.5.dp,
-                            color = Color.Gray,
-                            shape = RoundedCornerShape(15.dp)
-                        ),
+                        .border(0.5.dp, Color.Gray, RoundedCornerShape(15.dp)),
                     singleLine = true,
                     shape = RoundedCornerShape(15.dp),
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 18.sp,
-                        fontFamily = Montserrat,
-                        fontWeight = FontWeight.Medium,
-                        color = if (email.isNotEmpty()) Color.Black else Color(0xFF828282)
-                    ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFACBD6F),
-                        unfocusedBorderColor = Color.Gray
-                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
 
                 Spacer(modifier = Modifier.height(36.dp))
 
-                // password section
                 Text(
                     text = "Password",
                     fontSize = 20.sp,
@@ -152,29 +132,13 @@ fun LoginScreen(
                     value = password,
                     onValueChange = { password = it },
                     placeholder = {
-                        Text(
-                            text = "Password",
-                            color = Color(0xFF828282),
-                            fontSize = 18.sp,
-                            fontFamily = Montserrat,
-                            fontWeight = FontWeight.Normal
-                        )
+                        Text("Password", color = Color(0xFF828282), fontSize = 18.sp)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(
-                            width = 0.5.dp,
-                            color = Color.Gray,
-                            shape = RoundedCornerShape(15.dp)
-                        ),
+                        .border(0.5.dp, Color.Gray, RoundedCornerShape(15.dp)),
                     singleLine = true,
                     shape = RoundedCornerShape(15.dp),
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 18.sp,
-                        fontFamily = Montserrat,
-                        fontWeight = FontWeight.Medium,
-                        color = if (password.isNotEmpty()) Color.Black else Color(0xFF828282)
-                    ),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -182,85 +146,99 @@ fun LoginScreen(
                                 painter = painterResource(
                                     if (passwordVisible) R.drawable.password_show else R.drawable.password_hide
                                 ),
-                                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                     },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFACBD6F),
-                        unfocusedBorderColor = Color.Gray
-                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                 )
 
-                // forget password link (migth remove)
                 Text(
                     text = "Forgot Password?",
-                    textAlign = TextAlign.Left,
                     fontSize = 14.sp,
                     fontFamily = Inter,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black,
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier
-                        .fillMaxWidth()
                         .padding(top = 8.dp)
                         .clickable { onForgotPassword() }
                 )
             }
 
-            Spacer(modifier = Modifier.height(76.dp))
+            if (errorMessage != null) {
+                Text(errorMessage!!, color = Color.Red, modifier = Modifier.padding(top = 8.dp))
+            }
 
-            Box(
+            Spacer(modifier = Modifier.height(60.dp))
+
+            Button(
+                onClick = {
+                    focusManager.clearFocus()
+
+                    println("Login button clicked: $email / $password")
+
+                    if (email.isBlank() || password.isBlank()) {
+                        errorMessage = "Please enter email & password"
+                        return@Button
+                    }
+
+                    scope.launch {
+                        try {
+                            val res = RetrofitClient.authService.login(
+                                LoginRequest(email.trim(), password.trim())
+                            )
+                            println("Login Response Code: ${res.code()}")
+
+                            if (res.isSuccessful) {
+                                val body = res.body()
+                                if (body != null) {
+                                    AuthStore.saveToken(context, body.token)
+                                    AuthStore.loadToken(context)
+                                    onNavigateToHome()
+
+                                } else {
+                                    errorMessage = "Empty response"
+                                }
+                            } else {
+                                errorMessage = "Invalid credentials (${res.code()})"
+                            }
+                        } catch (e: Exception) {
+                            println("Login Error: ${e.localizedMessage}")
+                            errorMessage = "Network error"
+                        }
+                    }
+                },
+
                 modifier = Modifier
                     .fillMaxWidth()
-//                    .padding(horizontal = 24.dp)
+                    .height(50.dp)
+                    .border(2.dp, Color(0xFF595880), RoundedCornerShape(15.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFCBCBE7)
+                ),
+                shape = RoundedCornerShape(15.dp)
             ) {
-                Button(
-                    onClick = onNavigateToHome,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                        .border(
-                            width = 2.dp,
-                            color = Color(0xFF595880),
-                            shape = RoundedCornerShape(15.dp)
-                        ),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFCBCBE7)
-                    ),
-                    shape = RoundedCornerShape(15.dp)
-                ) {
-                    Text(
-                        text = "Sign in",
-                        fontSize = 24.sp,
-                        color = Color(0xFF595880),
-                        fontFamily = Montserrat,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                Text(
+                    text = "Sign in",
+                    fontSize = 24.sp,
+                    color = Color(0xFF595880),
+                    fontFamily = Montserrat,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
             Row(
-                modifier = Modifier.padding(bottom = 16.dp).background(Color.White),
+                modifier = Modifier.padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "Don't have an account? ",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Medium
-                )
+                Text("Don't have an account? ", fontFamily = Inter)
                 Text(
                     text = "Sign up",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable { onNavigateToSignUp() },
                     fontFamily = Inter,
-                    fontWeight = FontWeight.Medium
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { onNavigateToSignUp() }
                 )
             }
         }

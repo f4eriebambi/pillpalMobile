@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,7 +27,13 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pillpalmobile.data.AuthStore
 import com.example.pillpalmobile.model.Medication
+import com.example.pillpalmobile.model.UpdateMedicationRequest
+import com.example.pillpalmobile.network.RetrofitClient
+import com.example.pillpalmobile.network.ScheduleRequest
+
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -43,6 +50,9 @@ fun EditMedicationScreen(
     onDelete: (Int) -> Unit = {},
     onSave: (Medication) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     val scrollState = rememberScrollState()
     // header section
     var name by remember { mutableStateOf(medication?.name ?: "") }
@@ -57,7 +67,8 @@ fun EditMedicationScreen(
     // repeat section + selection of how often
     var repeatEnabled by remember { mutableStateOf(false) }
     var howOften by remember { mutableStateOf("Daily") }
-    val selectedDays = remember { mutableStateListOf(false, false, false, false, false, false, false) }
+    val selectedDays =
+        remember { mutableStateListOf(false, false, false, false, false, false, false) }
     var startDate by remember { mutableStateOf("Nov 7, 2025") }
     var endDate by remember { mutableStateOf("Nov 21, 2025") }
     var showHowOftenDropdown by remember { mutableStateOf(false) }
@@ -68,7 +79,14 @@ fun EditMedicationScreen(
     var startDateValue by remember { mutableStateOf<Long?>(null) }
     var endDateValue by remember { mutableStateOf<Long?>(null) }
     // date section ( REPEAT OFF )
-    var medicationDate by remember { mutableStateOf(SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault()).format(Date())) }
+    var medicationDate by remember {
+        mutableStateOf(
+            SimpleDateFormat(
+                "EEE, MMM d, yyyy",
+                Locale.getDefault()
+            ).format(Date())
+        )
+    }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
     // notes
@@ -201,7 +219,8 @@ fun EditMedicationScreen(
                     onDismiss = { showDatePicker = false },
                     onConfirm = {
                         datePickerState.selectedDateMillis?.let { millis ->
-                            val dateFormat = SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault())
+                            val dateFormat =
+                                SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault())
                             medicationDate = dateFormat.format(Date(millis))
                         }
                         showDatePicker = false
@@ -252,8 +271,7 @@ fun EditMedicationScreen(
             onDismiss = { showCancelDialog = false },
             onConfirm = {
                 showCancelDialog = false
-                // navigate back to home screen
-                // onNavigateBack()
+                onNavigateBack()
             }
         )
 
@@ -285,32 +303,43 @@ fun EditMedicationScreen(
             onConfirm = {
                 showSaveConfirmDialog = false
 
-                // if repeat is enabled, get the selected days
-                val weeklyDays = if (howOften == "Weekly") {
-                    val dayNames = listOf("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
-                    selectedDays.mapIndexedNotNull { index, isSelected ->
-                        if (isSelected) dayNames[index] else null
+                scope.launch {
+
+                    val token = AuthStore.getToken(context) ?: return@launch
+
+                    val request = UpdateMedicationRequest(
+                        name = name,
+                        notes = notes.ifBlank { null },
+                        schedule = ScheduleRequest(
+                            repeat_type = when {
+                                !repeatEnabled -> "once"
+                                howOften == "Daily" -> "daily"
+                                howOften == "Weekly" -> "weekly"
+                                howOften == "Custom" -> "custom"
+                                else -> "daily"
+                            },
+                            day_mask = if (howOften == "Weekly") {
+                                selectedDays.joinToString("") { if (it) "1" else "0" }
+                            } else null,
+                            times = times.toList(),
+                            custom_start = if (howOften == "Custom") formatMillis(startDateValue) else null,
+                            custom_end = if (howOften == "Custom") formatMillis(endDateValue) else null
+                        )
+                    )
+
+                    val response = RetrofitClient.medicationService.updateMedication(
+                        medId = medicationId,
+                        body = request
+                    )
+
+                    if (response.isSuccessful) {
+                        showSaveSuccessDialog = true
+                    } else {
+                        // TODO: Show error dialog
                     }
-                } else emptyList()
-
-                val updatedMedication = Medication(
-                    id = medicationId,
-                    name = name,
-                    reminderTimes = times.toList(),
-                    medicationDate = if (!repeatEnabled) medicationDate else "",
-                    repeatEnabled = repeatEnabled,
-                    repeatFrequency = if (repeatEnabled) howOften else "Daily",
-                    repeatDays = weeklyDays,
-                    repeatStartDate = if (howOften == "Custom") startDateValue else null,
-                    repeatEndDate = if (howOften == "Custom") endDateValue else null,
-                    notes = notes
-                )
-
-                onSave(updatedMedication)
-
-                // show success modal
-                showSaveSuccessDialog = true
+                }
             }
+
         )
 
         SaveSuccessDialog(
@@ -318,12 +347,12 @@ fun EditMedicationScreen(
             onDismiss = { showSaveSuccessDialog = false },
             onConfirm = {
                 showSaveSuccessDialog = false
-                // navigate back to home
-                // onNavigateBack()
+                onNavigateBack()
             }
         )
     }
 }
+
 
 // header section
 @Composable
@@ -1629,4 +1658,11 @@ fun SaveSuccessDialog(
             }
         )
     }
+}
+
+private fun formatMillis(millis: Long?): String? {
+    if (millis == null) return null
+    val date = Date(millis)
+    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    return sdf.format(date)
 }

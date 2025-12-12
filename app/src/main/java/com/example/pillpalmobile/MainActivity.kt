@@ -28,15 +28,18 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.pillpalmobile.data.DataSource
 import com.example.pillpalmobile.model.Medication
 import com.example.pillpalmobile.model.User
+import com.example.pillpalmobile.navigation.AppNavGraph
 import com.example.pillpalmobile.screens.SettingsScreen
 import com.example.pillpalmobile.screens.WelcomeScreen
 import com.example.pillpalmobile.ui.theme.PillPalMobileTheme
@@ -45,80 +48,91 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Locale
+import androidx.navigation.compose.rememberNavController
+import com.example.pillpalmobile.data.AuthStore
+//import com.example.pillpalmobile.data.DataSource.medications
+import com.example.pillpalmobile.model.MedicationResponse
+import com.example.pillpalmobile.navigation.AppNavGraph
+import com.example.pillpalmobile.navigation.BottomNavBar
+import com.example.pillpalmobile.network.RetrofitClient
+import kotlinx.coroutines.launch
+import coil.compose.rememberAsyncImagePainter
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import android.os.Build
+
+
 
 
 // https://developer.android.com/develop/ui/views/text-and-emoji/fonts-in-xml
 // FONTS USED FROM : https://fonts.google.com/ (montserrat, inter, pixelify sans) and https://developer.apple.com/fonts//https://github.com/ravijoon/SF-Pro-Expanded-Font/blob/main/SF-Pro.ttf (sf pro)
 
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        RetrofitClient.initialize(applicationContext)
+
+        lifecycleScope.launch {
+            AuthStore.loadToken(applicationContext)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
+        }
+
+
         enableEdgeToEdge()
         setContent {
             PillPalMobileTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color.White
-                ) {
-                    MainApp()
-//                    HomeScreen()
-//                    WelcomeScreen(
-//                        onNavigateToLogin = { /* need to do login screen */ },
-//                        onNavigateToSignUp = { /* need to do signup screen */ }
-//                    )
-//                    LoginScreen(
-//                        onNavigateToSignUp = { /* */ },
-//                        onNavigateToHome = { /* */ },
-//                        onForgotPassword = { /* */ }
-//                    )
-                }
+                MainApp()
             }
         }
     }
 }
 
+
+
+
 @Composable
 fun MainApp() {
+    val context = LocalContext.current
+
+
+    var appReady by remember { mutableStateOf(false) }
+
     var showSplash by remember { mutableStateOf(true) }
 
-    if (showSplash) {
-        SplashScreen {
-            showSplash = false
-        }
-    } else {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = Color.White
-        ) {
-//            SplashScreen (
-//                onLoadingComplete = {
-//                    showSplash = false
-//                }
-//            )
-//            HomeScreen()
-            HistoryScreen()
-//            SettingsScreen()
-//            WelcomeScreen(
-//                onNavigateToLogin = { },
-//                onNavigateToSignUp = { },
-//            )
-//            LoginScreen(
-//                onNavigateToSignUp = { /* */ },
-//                onNavigateToHome = { /* */ },
-//                onForgotPassword = { /* */ }
-//            )
-//            CreateAccountScreen(
-//                onNavigateToLogin = { /* */ },
-//                onAccountCreated = { /* */ }
-//            )
-//            EditMedicationScreen {  }
-//            CalendarScreen(
-//                medications = DataSource.medications
-//            )
-        }
+
+    LaunchedEffect(Unit) {
+        AuthStore.loadToken(context)
+        appReady = true
     }
+
+
+    if (!appReady) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+
+    if (showSplash) {
+        SplashScreen { showSplash = false }
+        return
+    }
+
+
+    val navController = rememberNavController()
+    AppNavGraph(navController)
 }
+
+
+
+
 
 @Composable
 fun SplashScreen(onLoadingComplete: () -> Unit) {
@@ -156,7 +170,13 @@ fun SplashScreen(onLoadingComplete: () -> Unit) {
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    user: User,
+    medications: List<Medication>,
+    isMedicationLoading: Boolean,
+    navController: NavHostController,
+    onLogout: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -169,7 +189,7 @@ fun HomeScreen() {
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            GreetingSection(user = DataSource.user)
+            GreetingSection(user = user)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -177,11 +197,24 @@ fun HomeScreen() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            ProfileCard(user = DataSource.user)
+            ProfileCard(user = user)
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            MedicationSection(medications = DataSource.medications)
+            if (isMedicationLoading) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                }
+
+            } else {
+                MedicationSection(
+                    medications = medications,
+                    navController = navController
+                )
+            }
         }
 
         // nav abr
@@ -192,7 +225,7 @@ fun HomeScreen() {
 //                .background(Color.White)
                 .padding(bottom = 20.dp)
         ) {
-            NavigationBar()
+            BottomNavBar(navController, current = "home")
         }
     }
 }
@@ -314,12 +347,16 @@ fun ProfileCard(user: User) {
                             .background(Color.White)
                     ) {
                         Image(
-                            painter = painterResource(user.avatarRes),
-                            contentDescription = null,
+                            painter = rememberAsyncImagePainter(
+                                model = "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/bf/9a/35/bf9a3503-7edf-284e-c8ad-502415ad927a/iMessage_App_Icon-0-0-1x_U007emarketing-0-0-85-181.png/512x512bb.jpg",
+                                placeholder = painterResource(R.drawable.pfp),
+                                error = painterResource(R.drawable.pfp)
+                            ),
+                            contentDescription = "Profile Image",
                             modifier = Modifier
                                 .size(width = 90.dp, height = 88.dp)
                                 .align(Alignment.Center),
-                            contentScale = ContentScale.Fit
+                            contentScale = ContentScale.Crop
                         )
                     }
 //                    Spacer(modifier = Modifier.height(6.dp))
@@ -422,7 +459,10 @@ fun ProfileField(label: String, value: String) {
 }
 
 @Composable
-fun MedicationSection(medications: List<Medication>) {
+fun MedicationSection(
+    medications: List<Medication>,
+    navController: NavHostController
+) {
     val currentDate = LocalDate.now()
     val weekFields = WeekFields.of(Locale.getDefault())
     val weekNumber = currentDate.get(weekFields.weekOfWeekBasedYear())
@@ -482,23 +522,110 @@ fun MedicationSection(medications: List<Medication>) {
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    medications.forEach { medication ->
-                        MedicationItem(medication = medication)
-                        if (medication != medications.last()) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
-                                    .padding(top = 8.dp),
-                                thickness = 0.5.dp,
-                                color = Color(0xFF918C84)
-                            )
-                        }
+                    val realMeds = medications
+
+                    val placeholderCount = maxOf(0, 6 - realMeds.size)
+
+                    val placeholders = List(placeholderCount) {
+                        Medication(
+                            id = -1,
+                            name = "No Medication",
+                            reminderTimes = emptyList(),
+                            medicationDate = "",
+                            repeatEnabled = false
+                        )
                     }
+
+                    val displayList = realMeds + placeholders
+
+                    displayList.forEach { med ->
+                        MedicationRowUnified(
+                            name = med.name,
+                            isPlaceholder = med.id == -1,
+                            onClick = {
+                                if (med.id != -1) {
+                                    navController.navigate("edit_med/${med.id}")
+                                }
+                            }
+                        )
+                    }
+
+
+
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
         }
+    }
+}
+
+//@Composable
+//fun PlaceholderMedicationCard() {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(horizontal = 16.dp, vertical = 8.dp),
+//        horizontalArrangement = Arrangement.SpaceBetween
+//    ) {
+//        Text("Medication", fontSize = 20.sp, color = Color.Gray)
+//        Text(">", fontSize = 20.sp, color = Color.Gray)
+//    }
+//}
+
+
+
+//@Composable
+//fun MedicationSectionFromNetwork(
+//    medications: List<Medication>,
+//    navController: NavHostController
+//) {
+//    val mappedMeds = medications.map { med ->
+//
+////        val schedule = med.schedule
+//
+////        Medication(
+////            id = med.med_id,
+////            name = med.name,
+////            reminderTimes = schedule?.times ?: emptyList(),
+////            medicationDate = med.active_start_date ?: "",
+////            repeatEnabled = schedule?.repeat_type != null,
+////            repeatFrequency = when (schedule?.repeat_type) {
+////                "daily" -> "Daily"
+////                "weekly" -> "Weekly"
+////                "custom" -> "Custom"
+////                else -> "Daily"
+////            },
+////            repeatDays = decodeDayMask(schedule?.day_mask),
+////            repeatStartDate = schedule?.custom_start.toEpochMillis(),
+////            repeatEndDate = schedule?.custom_end.toEpochMillis(),
+////            notes = med.notes ?: ""
+////        )
+//    }
+//
+//    MedicationSection(
+//        medications = mappedMeds,
+//        navController = navController
+//    )
+//}
+
+fun String?.toEpochMillis(): Long? {
+    if (this.isNullOrBlank()) return null
+
+    return try {
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val localDate = java.time.LocalDate.parse(this, formatter)
+        localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun decodeDayMask(mask: String?): List<String> {
+    if (mask.isNullOrEmpty()) return emptyList()
+
+    val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    return mask.mapIndexedNotNull { index, c ->
+        if (c == '1') days[index] else null
     }
 }
 
@@ -535,7 +662,41 @@ fun MedicationItem(medication: Medication) {
 }
 
 @Composable
-fun NavigationBar() {
+fun MedicationRowUnified(
+    name: String,
+    isPlaceholder: Boolean,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isPlaceholder) { onClick?.invoke() }
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Text(
+            text = name,
+            fontSize = 22.sp,
+            fontFamily = PixelifySans,
+            fontWeight = if (isPlaceholder) FontWeight.Light else FontWeight.Normal,
+            color = if (isPlaceholder) Color.Gray else Color.Black,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center
+        )
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = if (isPlaceholder) Color.Gray else Color.Black,
+            modifier = Modifier.size(32.dp)
+        )
+    }
+}
+
+
+@Composable
+fun NavigationBar(navController: NavHostController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -573,7 +734,7 @@ fun NavigationBar() {
             iconRes = R.drawable.history,
             label = "history",
             modifier = Modifier
-                .clickable { /* navigate to history */ },
+                .clickable { navController.navigate("HistoryScreen")},
         )
 
         // add/calendar
@@ -581,23 +742,16 @@ fun NavigationBar() {
             iconRes = R.drawable.add_calendar,
             label = "add",
             modifier = Modifier
-                .clickable { /* navigation to add/calendar */ },
+                .clickable {navController.navigate("CalendarScreen")},
         )
 
-        // notifs
-        NavigationButton(
-            iconRes = R.drawable.bell,
-            label = "alerts",
-            modifier = Modifier
-                .clickable { /* navigate to notifs */ },
-        )
 
         // settings
         NavigationButton(
             iconRes = R.drawable.user_settings,
             label = "settings",
             modifier = Modifier
-                .clickable { /* navigate to settings */ },
+                .clickable { navController.navigate("SettingsScreen") },
         )
     }
 }
@@ -641,3 +795,4 @@ fun NavigationButton(iconRes: Int, label: String, modifier: Modifier) {
         }
     }
 }
+

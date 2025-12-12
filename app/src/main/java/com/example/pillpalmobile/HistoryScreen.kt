@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +28,12 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
+import androidx.navigation.NavHostController
+import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.navigation.BottomNavBar
+import com.example.pillpalmobile.model.HistoryAPIResponse
+import com.example.pillpalmobile.network.RetrofitClient
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 /**
  * BACKEND will dp:
@@ -69,6 +76,7 @@ data class DayHistory(
 
 @Composable
 fun HistoryScreen(
+    navController: NavHostController,
     medications: List<Medication> = emptyList(),
     currentStreak: Int = 0, // for BACKEND: Calculate from API
     onNavigateHome: () -> Unit = {},
@@ -78,13 +86,30 @@ fun HistoryScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    // HARDCODED TEST FOR STREAK - i changed to currentStreak parameter instead of testStreak after done testing
-//    val testStreak = 7 // commenting after im done testing
+    val context = LocalContext.current
+    var historyData by remember { mutableStateOf<List<DayHistory>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    // generate history from med data
-    val historyData = remember(medications) {
-        generateHistoryFromMedications(medications)
+// FIXED: Added import + no duplicate variable
+    val navBackStackEntry = navController.currentBackStackEntryAsState()
+
+    LaunchedEffect(navBackStackEntry.value) {
+        // only refresh when user navigates to history
+        if (navBackStackEntry.value?.destination?.route == "history") {
+            isLoading = true
+            try {
+                val token = AuthStore.getToken(context)
+                if (token != null) {
+                    val response = RetrofitClient.historyService.getHistory("Bearer $token")
+                    historyData = response.toDayHistoryList()
+                }
+            } catch (e: Exception) {
+                println("Error loading history: $e")
+            }
+            isLoading = false
+        }
     }
+
 
     Box(
         modifier = Modifier
@@ -129,12 +154,7 @@ fun HistoryScreen(
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
         ) {
-            HistoryNavigationBar(
-                onNavigateHome = onNavigateHome,
-                onNavigateCalendar = onNavigateCalendar,
-                onNavigateNotifications = onNavigateNotifications,
-                onNavigateSettings = onNavigateSettings
-            )
+            BottomNavBar(navController, current = "history")
         }
     }
 }
@@ -425,7 +445,7 @@ fun HistoryDateSection(dayHistory: DayHistory) {
             // show one "all medications" card for past days where everything was taken
             HistoryEntryCard(
                 entry = MedicationHistoryEntry(
-                    medicationName = "all medications taken",
+                    medicationName = "All Medications Taken",
                     scheduledTime = "",
                     status = HistoryStatus.TAKEN
                 ),
@@ -477,7 +497,7 @@ fun HistoryEntryCard(
                 // med name with formatting
                 Text(
                     text = if (entry.scheduledTime.isNotEmpty()) {
-                        "${entry.medicationName} — ${entry.scheduledTime}"
+                        "${entry.medicationName}: ${entry.scheduledTime}"
                     } else {
                         entry.medicationName
                     },
@@ -528,139 +548,109 @@ fun StatusBadge(status: HistoryStatus, isAllMedicationsCard: Boolean) {
     }
 }
 
-// nav bar
-@Composable
-fun HistoryNavigationBar(
-    onNavigateHome: () -> Unit,
-    onNavigateCalendar: () -> Unit,
-    onNavigateNotifications: () -> Unit,
-    onNavigateSettings: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // home
-        HistoryNavigationButton(
-            iconRes = R.drawable.home,
-            label = "home",
-            isSelected = false,
-            onClick = onNavigateHome
-        )
+//// nav bar
+//@Composable
+//fun HistoryNavigationBar(
+//    onNavigateHome: () -> Unit,
+//    onNavigateCalendar: () -> Unit,
+//    onNavigateNotifications: () -> Unit,
+//    onNavigateSettings: () -> Unit
+//) {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(horizontal = 16.dp, vertical = 4.dp),
+//        horizontalArrangement = Arrangement.SpaceEvenly,
+//        verticalAlignment = Alignment.CenterVertically
+//    ) {
+//        // home
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.home,
+//            label = "home",
+//            isSelected = false,
+//            onClick = onNavigateHome
+//        )
+//
+//        // history
+//        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//            Box(
+//                modifier = Modifier
+//                    .size(72.dp)
+//                    .shadow(
+//                        elevation = 4.dp,
+//                        shape = CircleShape,
+//                        spotColor = Color.Black,
+//                        ambientColor = Color.Black,
+//                        clip = false
+//                    )
+//                    .background(
+//                        color = Color(0xFFCBCBE7),
+//                        shape = CircleShape
+//                    )
+//                    .border(
+//                        width = 2.dp,
+//                        color = Color(0xFF595880),
+//                        shape = CircleShape
+//                    )
+//                    .clickable { /* already on history */ },
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Icon(
+//                    painter = painterResource(R.drawable.history),
+//                    contentDescription = null,
+//                    modifier = Modifier.size(48.dp),
+//                    tint = Color.Unspecified
+//                )
+//            }
+//        }
+//
+//        // calendar
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.add_calendar,
+//            label = "add",
+//            isSelected = false,
+//            onClick = onNavigateCalendar
+//        )
+//
+//        // notifications
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.bell,
+//            label = "alerts",
+//            isSelected = false,
+//            onClick = onNavigateNotifications
+//        )
+//
+//        // settings
+//        HistoryNavigationButton(
+//            iconRes = R.drawable.user_settings,
+//            label = "settings",
+//            isSelected = false,
+//            onClick = onNavigateSettings
+//        )
+//    }
+//}
 
-        // history
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = CircleShape,
-                        spotColor = Color.Black,
-                        ambientColor = Color.Black,
-                        clip = false
-                    )
-                    .background(
-                        color = Color(0xFFCBCBE7),
-                        shape = CircleShape
-                    )
-                    .border(
-                        width = 2.dp,
-                        color = Color(0xFF595880),
-                        shape = CircleShape
-                    )
-                    .clickable { /* already on history */ },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.history),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = Color.Unspecified
-                )
-            }
+fun List<HistoryAPIResponse>.toDayHistoryList(): List<DayHistory> {
+    return this.map { day ->
+        val date = LocalDate.parse(day.date)
+
+        val entries = day.medications.map { med ->
+            MedicationHistoryEntry(
+                medicationName = med.name,
+                scheduledTime = med.scheduledTime,
+                status = when (med.status.lowercase()) {
+                    "taken" -> HistoryStatus.TAKEN
+                    "missed" -> HistoryStatus.MISSED
+                    else -> HistoryStatus.UPCOMING
+                }
+            )
         }
 
-        // calendar
-        HistoryNavigationButton(
-            iconRes = R.drawable.add_calendar,
-            label = "add",
-            isSelected = false,
-            onClick = onNavigateCalendar
-        )
-
-        // notifications
-        HistoryNavigationButton(
-            iconRes = R.drawable.bell,
-            label = "alerts",
-            isSelected = false,
-            onClick = onNavigateNotifications
-        )
-
-        // settings
-        HistoryNavigationButton(
-            iconRes = R.drawable.user_settings,
-            label = "settings",
-            isSelected = false,
-            onClick = onNavigateSettings
+        DayHistory(
+            date = date,
+            entries = entries,
+            allTaken = entries.all { it.status == HistoryStatus.TAKEN }
         )
     }
 }
 
-@Composable
-fun HistoryNavigationButton(
-    iconRes: Int,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(70.dp)
-                .shadow(
-                    elevation = 4.dp,
-                    shape = CircleShape,
-                    spotColor = Color.Black,
-                    ambientColor = Color.Black,
-                    clip = false
-                )
-                .background(
-                    color = if (isSelected) Color(0xFFCBCBE7) else Color.White,
-                    shape = CircleShape
-                )
-                .border(
-                    width = if (isSelected) 2.dp else 1.dp,
-                    color = if (isSelected) Color(0xFF595880) else Color(0xFF7C8081),
-                    shape = CircleShape
-                )
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .padding(top = 4.dp),
-                    tint = Color.Unspecified
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    fontFamily = Montserrat,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-            }
-        }
-    }
-}

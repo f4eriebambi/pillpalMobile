@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,8 +29,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.model.RegisterRequest
+import com.example.pillpalmobile.network.RetrofitClient
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.launch
 
 
 // https://developer.android.com/develop/ui/views/components/pickers
@@ -44,8 +49,11 @@ import java.util.*
 @Composable
 fun CreateAccountScreen(
     onNavigateToLogin: () -> Unit,
-    onAccountCreated: (String) -> Unit
+    onAccountCreated: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
     var name by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
@@ -58,7 +66,7 @@ fun CreateAccountScreen(
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
 
-    var showSuccessDialog by remember { mutableStateOf(false) }
+//    var showSuccessDialog by remember { mutableStateOf(false) }
 
     // form fields validation
     val nameRegex = Regex("^[a-zA-Z][a-zA-Z'\\-\\s]{0,14}$")
@@ -529,8 +537,42 @@ fun CreateAccountScreen(
             ) {
                 Button(
                     onClick = {
-                        showSuccessDialog = true
-                        onAccountCreated(email)
+                        scope.launch {
+                            println("Create Account Clicked!")
+
+                            try {
+                                val result = RetrofitClient.authService.register(
+                                    RegisterRequest(
+                                        email = email.trim(),
+                                        password = password.trim(),
+                                        full_name = name.trim(),
+                                        birthday = birthday.trim()
+                                    )
+                                )
+
+                                println("Response Code: ${result.code()}")
+
+                                if (result.isSuccessful) {
+                                    val token = result.body()?.token
+                                    println("Signup Success!! Token: $token")
+
+                                    if (token != null) {
+                                        AuthStore.saveToken(context, token)
+                                        onAccountCreated()
+                                    } else {
+                                        errorMessage = "Signup succeeded but token missing"
+                                    }
+                                } else {
+                                    val errorBody = result.errorBody()?.string()
+                                    println("Signup Failed: $errorBody")
+                                    errorMessage = "Signup failed: ${result.code()}"
+                                }
+
+                            } catch (e: Exception) {
+                                println("Network Error: ${e.localizedMessage}")
+                                errorMessage = "Network error: ${e.localizedMessage}"
+                            }
+                        }
                     },
                     enabled = isNameValid && isEmailValid && isPasswordValid && isOldEnough &&
                             confirmPassword == password,
@@ -560,73 +602,75 @@ fun CreateAccountScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-            }
 
-            if (showSuccessDialog) {
-                AlertDialog(
-                    onDismissRequest = { showSuccessDialog = false },
-                    confirmButton = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            TextButton(
-                                onClick = { showSuccessDialog = false },
-                                modifier = Modifier
-                                    .border(
-                                        width = 1.dp,
-                                        color = Color.Black,
-                                        shape = RoundedCornerShape(15.dp)
-                                    )
-                                    .background(Color.White, RoundedCornerShape(15.dp))
-                            ) {
-                                Text(
-                                    text = "ok",
-                                    fontFamily = Montserrat,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 20.sp
-                                )
-                            }
-                        }
-                    },
-                    title = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Account Created!",
-                                fontFamily = Montserrat,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center,
-                                fontSize = 22.sp,
-                                modifier = Modifier.padding(top = 12.dp)
-                            )
-                        }
-                    },
-                    text = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Verification email sent to\n$email",
-                                textAlign = TextAlign.Center,
-                                fontFamily = Montserrat,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 22.sp,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                )
+
             }
+            // we can work on email verification later as an extra if we have time but i dont feel we need it rn
+//            if (showSuccessDialog) {
+//                AlertDialog(
+//                    onDismissRequest = { showSuccessDialog = false },
+//                    confirmButton = {
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(bottom = 8.dp),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            TextButton(
+//                                onClick = { showSuccessDialog = false },
+//                                modifier = Modifier
+//                                    .border(
+//                                        width = 1.dp,
+//                                        color = Color.Black,
+//                                        shape = RoundedCornerShape(15.dp)
+//                                    )
+//                                    .background(Color.White, RoundedCornerShape(15.dp))
+//                            ) {
+//                                Text(
+//                                    text = "ok",
+//                                    fontFamily = Montserrat,
+//                                    fontWeight = FontWeight.SemiBold,
+//                                    fontSize = 20.sp
+//                                )
+//                            }
+//                        }
+//                    },
+//                    title = {
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(top = 12.dp),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            Text(
+//                                text = "Account Created!",
+//                                fontFamily = Montserrat,
+//                                fontWeight = FontWeight.SemiBold,
+//                                textAlign = TextAlign.Center,
+//                                fontSize = 22.sp,
+//                                modifier = Modifier.padding(top = 12.dp)
+//                            )
+//                        }
+//                    },
+//                    text = {
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(top = 12.dp),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            Text(
+//                                text = "Verification email sent to\n$email",
+//                                textAlign = TextAlign.Center,
+//                                fontFamily = Montserrat,
+//                                fontWeight = FontWeight.Medium,
+//                                fontSize = 22.sp,
+//                                modifier = Modifier.fillMaxWidth()
+//                            )
+//                        }
+//                    }
+//                )
+//            }
 
             Row(
                 modifier = Modifier.padding(bottom = 16.dp).background(Color.White),
