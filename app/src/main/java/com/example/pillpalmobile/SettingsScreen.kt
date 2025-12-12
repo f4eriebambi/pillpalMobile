@@ -31,6 +31,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.navigation.NavHostController
 import com.example.pillpalmobile.navigation.BottomNavBar
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import android.widget.Toast
+import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.network.RetrofitClient
+import com.example.pillpalmobile.network.NotificationSettingsRequest
+
 
 
 @Composable
@@ -257,9 +264,46 @@ fun HelpSupportSection(
 
 @Composable
 fun NotificationSection() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var sound by remember { mutableStateOf(true) }
     var vibration by remember { mutableStateOf(true) }
     var deviceNotif by remember { mutableStateOf(true) }
+
+    // Load initial values from backend
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val token = AuthStore.getCachedToken()
+                if (token != null) {
+                    val service = RetrofitClient.settingsService
+
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun saveSettings() {
+        scope.launch {
+            try {
+                val service = RetrofitClient.settingsService
+
+                val body = NotificationSettingsRequest(
+                    sound = sound,
+                    vibration = vibration,
+                    device_notifications = deviceNotif
+                )
+
+                service.updateSettings(body)
+
+                Toast.makeText(context, "Settings updated", Toast.LENGTH_SHORT).show()
+
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to update", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -287,12 +331,22 @@ fun NotificationSection() {
                 )
                 .padding(horizontal = 14.dp, vertical = 4.dp)
         ) {
-            NotificationToggle("Sound", sound) { sound = it }
-            NotificationToggle("Vibration", vibration) { vibration = it }
-            NotificationToggle("Device Notifications", deviceNotif) { deviceNotif = it }
+            NotificationToggle("Sound", sound) {
+                sound = it
+                saveSettings()
+            }
+            NotificationToggle("Vibration", vibration) {
+                vibration = it
+                saveSettings()
+            }
+            NotificationToggle("Device Notifications", deviceNotif) {
+                deviceNotif = it
+                saveSettings()
+            }
         }
     }
 }
+
 
 
 

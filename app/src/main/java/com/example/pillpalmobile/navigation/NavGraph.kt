@@ -21,286 +21,270 @@ import com.example.pillpalmobile.screens.SettingsScreen
 import com.example.pillpalmobile.HistoryScreen
 import com.example.pillpalmobile.CalendarScreen
 import kotlinx.coroutines.launch
+import com.example.pillpalmobile.network.AlertListener
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
-    val context = LocalContext.current
+
     var startDestination by remember { mutableStateOf<String?>(null) }
 
+    // ONLY USE CACHED TOKEN (already loaded by MyApplication)
     LaunchedEffect(Unit) {
-        val token = AuthStore.getToken(context)
-        startDestination = if (token != null) "home" else "login"
+        val token = AuthStore.getCachedToken()
+        startDestination = if (token.isNullOrEmpty()) "login" else "home"
     }
 
-    if (startDestination != null) {
-        NavHost(
-            navController = navController,
-            startDestination = startDestination!!
+    if (startDestination == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
-            // LOGIN
-            composable("login") {
-                LoginScreen(
-                    onNavigateToSignUp = { navController.navigate("signup") },
-                    onNavigateToHome = {
-                        navController.navigate("home") {
-                            popUpTo("login") { inclusive = true }
+    NavHost(
+        navController = navController,
+        startDestination = startDestination!!
+    ) {
+
+        // LOGIN
+        composable("login") {
+            LoginScreen(
+                onNavigateToSignUp = { navController.navigate("signup") },
+                onNavigateToHome = {
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onForgotPassword = {}
+            )
+        }
+
+        // SIGNUP
+        composable("signup") {
+            CreateAccountScreen(
+                onAccountCreated = {
+                    navController.navigate("home") {
+                        popUpTo("signup") { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = { navController.navigate("login") }
+            )
+        }
+
+        // HOME
+        composable("home") {
+            val ctx = LocalContext.current
+            val scope = rememberCoroutineScope()
+
+            var user by remember { mutableStateOf<User?>(null) }
+            var medications by remember { mutableStateOf<List<Medication>>(emptyList()) }
+            var isMedLoading by remember { mutableStateOf(true) }
+
+            // LOAD PROFILE
+            LaunchedEffect(Unit) {
+                try {
+                    val res = RetrofitClient.authService.getProfile()
+                    if (res.isSuccessful) {
+                        res.body()?.let { data ->
+                            val firstName = data.full_name?.split(" ")?.firstOrNull() ?: "User"
+                            user = User(
+                                name = firstName,
+                                birthday = data.birthday ?: "N/A",
+                                avatarRes = R.drawable.pfp
+                            )
                         }
-                    },
-                    onForgotPassword = {}
-                )
+                    } else {
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("APP", "User load error: $e")
+                }
             }
 
-            // SIGNUP
-            composable("signup") {
-                CreateAccountScreen(
-                    onAccountCreated = {
-                        navController.navigate("home") {
-                            popUpTo("signup") { inclusive = true }
-                        }
-                    },
-                    onNavigateToLogin = { navController.navigate("login") }
-                )
+            // LOAD MEDICATIONS
+            LaunchedEffect(Unit) {
+                try {
+                    val apiMeds = RetrofitClient.medicationService.getMedications()
+                    medications = apiMeds.map { med ->
+                        Medication(
+                            id = med.med_id,
+                            name = med.name,
+                            reminderTimes = med.schedule?.times ?: emptyList(),
+                            medicationDate = med.active_start_date ?: "",
+                            repeatEnabled = med.schedule?.repeat_type != null,
+                            repeatFrequency = when (med.schedule?.repeat_type) {
+                                "daily" -> "Daily"
+                                "weekly" -> "Weekly"
+                                "custom" -> "Custom"
+                                else -> "Daily"
+                            },
+                            repeatDays = decodeDayMask(med.schedule?.day_mask),
+                            repeatStartDate = med.schedule?.custom_start.toEpochMillis(),
+                            repeatEndDate = med.schedule?.custom_end.toEpochMillis(),
+                            notes = med.notes ?: ""
+                        )
+                    }
+                } catch (e: Exception) {
+                    Log.e("APP", "Medication error: $e")
+                }
+                isMedLoading = false
             }
 
-            // HOME
-            composable("home") {
-                var user by remember { mutableStateOf<User?>(null) }
-                var medications by remember { mutableStateOf<List<Medication>>(emptyList()) }
-                var isMedLoading by remember { mutableStateOf(true) }
+            if (user != null) {
 
-                val ctx = LocalContext.current
-                val coroutineScope = rememberCoroutineScope()
 
-                // Load user profile once when Home composable is created
                 LaunchedEffect(Unit) {
-                    val token = AuthStore.getToken(ctx)
-                    if (token != null) {
-                        try {
-                            val res = RetrofitClient.authService.getProfile("Bearer $token")
-                            if (res.isSuccessful) {
-                                res.body()?.let { data ->
-                                    val firstName =
-                                        data.full_name?.split(" ")?.firstOrNull() ?: "User"
-                                    user = User(
-                                        name = firstName,
-                                        birthday = data.birthday ?: "N/A",
-                                        avatarRes = R.drawable.pfp
-                                    )
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("APP", "User load error: $e")
-                        }
-                    }
+                    AlertListener.start(context = ctx, deviceId = 1)
                 }
 
-                // Load medications when Home composable is created
-                LaunchedEffect(Unit) {
-                    val token = AuthStore.getToken(ctx)
-                    if (token != null) {
-                        try {
-                            val apiMeds =
-                                RetrofitClient.medicationService.getMedications("Bearer $token")
-
-                            medications = apiMeds.map { med ->
-                                val schedule = med.schedule
-                                Medication(
-                                    id = med.med_id,
-                                    name = med.name,
-                                    reminderTimes = schedule?.times ?: emptyList(),
-                                    medicationDate = med.active_start_date ?: "",
-                                    repeatEnabled = schedule?.repeat_type != null,
-                                    repeatFrequency = when (schedule?.repeat_type) {
-                                        "daily" -> "Daily"
-                                        "weekly" -> "Weekly"
-                                        "custom" -> "Custom"
-                                        else -> "Daily"
-                                    },
-                                    repeatDays = decodeDayMask(schedule?.day_mask),
-                                    repeatStartDate = schedule?.custom_start.toEpochMillis(),
-                                    repeatEndDate = schedule?.custom_end.toEpochMillis(),
-                                    notes = med.notes ?: ""
-                                )
-                            }
-
-                        } catch (e: Exception) {
-                            Log.e("APP", "Medication error: $e")
-                        }
-                    }
-
-                    isMedLoading = false
-                }
-
-                if (user != null) {
-                    HomeScreen(
-                        user = user!!,
-                        medications = medications,
-                        isMedicationLoading = isMedLoading,
-                        navController = navController,
-                        onLogout = {
-                            coroutineScope.launch {
-                                AuthStore.clearToken(ctx)
-                                navController.navigate("login") {
-                                    popUpTo("home") { inclusive = true }
-                                }
-                            }
-                        }
-                    )
-                } else {
-                    Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-            }
-
-            // EDIT MEDICATION
-            composable("edit_med/{medId}") { backStackEntry ->
-                val medId = backStackEntry.arguments?.getString("medId")?.toIntOrNull()
-                val ctx = LocalContext.current
-                val scope = rememberCoroutineScope()
-
-                var medication by remember { mutableStateOf<Medication?>(null) }
-                var isLoading by remember { mutableStateOf(true) }
-
-                LaunchedEffect(medId) {
-                    if (medId != null) {
-                        try {
-                            val token = AuthStore.getToken(ctx)
-                            if (token != null) {
-                                val res = RetrofitClient.medicationService.getMedicationById(
-                                    "Bearer $token",
-                                    medId
-                                )
-
-                                medication = Medication(
-                                    id = res.med_id,
-                                    name = res.name,
-                                    reminderTimes = res.schedule?.times ?: emptyList(),
-                                    medicationDate = res.active_start_date ?: "",
-                                    repeatEnabled = res.schedule?.repeat_type != null,
-                                    repeatFrequency = when (res.schedule?.repeat_type) {
-                                        "daily" -> "Daily"
-                                        "weekly" -> "Weekly"
-                                        "custom" -> "Custom"
-                                        else -> "Daily"
-                                    },
-                                    repeatDays = decodeDayMask(res.schedule?.day_mask),
-                                    repeatStartDate = res.schedule?.custom_start.toEpochMillis(),
-                                    repeatEndDate = res.schedule?.custom_end.toEpochMillis(),
-                                    notes = res.notes ?: ""
-                                )
-                            }
-                        } catch (_: Exception) {
-                        }
-                    }
-
-                    isLoading = false
-                }
-
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    EditMedicationScreen(
-                        medication = medication,
-                        onNavigateBack = { navController.popBackStack() },
-                        onDelete = { medIdToDelete ->
-                            scope.launch {
-                                val token = AuthStore.getToken(ctx) ?: return@launch
-                                try {
-                                    val res =
-                                        RetrofitClient.medicationService.deleteMedication(
-                                            "Bearer $token",
-                                            medIdToDelete
-                                        )
-
-                                    if (res.isSuccessful) {
-                                        // Go back to a FRESH Home, which will reload meds
-                                        navController.navigate("home") {
-                                            popUpTo("home") { inclusive = true }
-                                        }
-                                    } else {
-                                        Log.e(
-                                            "APP",
-                                            "Delete failed: ${res.code()} ${res.message()}"
-                                        )
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("APP", "Delete error", e)
-                                }
-                            }
-                        },
-                        onSave = {
-                            navController.popBackStack()
-                        }
-                    )
-                }
-            }
-
-            // SETTINGS
-            composable("settings") {
-                val ctx = LocalContext.current
-                val scope = rememberCoroutineScope()
-
-                SettingsScreen(
+                HomeScreen(
+                    user = user!!,
+                    medications = medications,
+                    isMedicationLoading = isMedLoading,
                     navController = navController,
-                    onLogoutConfirm = {
+                    onLogout = {
                         scope.launch {
                             AuthStore.clearToken(ctx)
                             navController.navigate("login") {
                                 popUpTo("home") { inclusive = true }
                             }
                         }
-                    },
-                    onDeleteAccountConfirm = {
+                    }
+                )
+            } else {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+
+
+        // EDIT MEDICATION
+        composable("edit_med/{medId}") { backStackEntry ->
+            val medId = backStackEntry.arguments?.getString("medId")?.toIntOrNull()
+            val ctx = LocalContext.current
+            val scope = rememberCoroutineScope()
+
+            var medication by remember { mutableStateOf<Medication?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+
+            LaunchedEffect(medId) {
+                if (medId != null) {
+                    try {
+                        val res = RetrofitClient.medicationService.getMedicationById(medId)
+                        medication = Medication(
+                            id = res.med_id,
+                            name = res.name,
+                            reminderTimes = res.schedule?.times ?: emptyList(),
+                            medicationDate = res.active_start_date ?: "",
+                            repeatEnabled = res.schedule?.repeat_type != null,
+                            repeatFrequency = when (res.schedule?.repeat_type) {
+                                "daily" -> "Daily"
+                                "weekly" -> "Weekly"
+                                "custom" -> "Custom"
+                                else -> "Daily"
+                            },
+                            repeatDays = decodeDayMask(res.schedule?.day_mask),
+                            repeatStartDate = res.schedule?.custom_start.toEpochMillis(),
+                            repeatEndDate = res.schedule?.custom_end.toEpochMillis(),
+                            notes = res.notes ?: ""
+                        )
+                    } catch (_: Exception) { }
+                }
+                isLoading = false
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                EditMedicationScreen(
+                    medication = medication,
+                    onNavigateBack = { navController.popBackStack() },
+
+                    onDelete = { medIdToDelete ->
                         scope.launch {
-                            val token = AuthStore.getToken(ctx)
-
-                            if (token != null) {
-                                try {
-                                    RetrofitClient.authService.deleteAccount("Bearer $token")
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
+                            try {
+                                val res =
+                                    RetrofitClient.medicationService.deleteMedication(medIdToDelete)
+                                if (res.isSuccessful) {
+                                    navController.navigate("home") {
+                                        popUpTo("home") { inclusive = true }
+                                    }
                                 }
-                            }
-
-                            AuthStore.clearToken(ctx)
-
-                            navController.navigate("signup") {
-                                popUpTo("home") { inclusive = true }
-                            }
+                            } catch (_: Exception) { }
                         }
+                    },
+
+                    onSave = {
+                        navController.popBackStack()
                     }
                 )
             }
+        }
 
-            // HISTORY
-            composable("history") {
-                HistoryScreen(navController)
-            }
+        // SETTINGS
+        composable("settings") {
+            val ctx = LocalContext.current
+            val scope = rememberCoroutineScope()
 
-            // CALENDAR
-            composable("calendar") {
-                CalendarScreen(
-                    navController = navController,
-                    onAddMedication = { navController.navigate("add_medication") }
-                )
-            }
+            SettingsScreen(
+                navController = navController,
 
-            // ADD MEDICATION
-            composable("add_medication") {
-                AddMedicationScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+                onLogoutConfirm = {
+                    scope.launch {
+                        AuthStore.clearToken(ctx)
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                },
+
+                onDeleteAccountConfirm = {
+                    scope.launch {
+                        try {
+                            RetrofitClient.authService.deleteAccount()
+                        } catch (_: Exception) { }
+
+                        AuthStore.clearToken(ctx)
+                        navController.navigate("signup") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+
+        // HISTORY
+        composable("history") {
+            HistoryScreen(navController)
+        }
+
+        // CALENDAR
+        composable("calendar") {
+            CalendarScreen(
+                navController = navController,
+                onAddMedication = { navController.navigate("add_medication") }
+            )
+        }
+
+        // ADD MEDICATION
+        composable("add_medication") {
+            AddMedicationScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

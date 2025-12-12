@@ -195,7 +195,9 @@ fun LoginScreen(
                                 val body = res.body()
                                 if (body != null) {
                                     AuthStore.saveToken(context, body.token)
+                                    AuthStore.loadToken(context)
                                     onNavigateToHome()
+
                                 } else {
                                     errorMessage = "Empty response"
                                 }

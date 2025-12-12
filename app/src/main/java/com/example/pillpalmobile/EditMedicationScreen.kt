@@ -328,7 +328,6 @@ fun EditMedicationScreen(
                     )
 
                     val response = RetrofitClient.medicationService.updateMedication(
-                        token = "Bearer $token",
                         medId = medicationId,
                         body = request
                     )

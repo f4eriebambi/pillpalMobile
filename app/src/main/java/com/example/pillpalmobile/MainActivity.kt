@@ -57,18 +57,32 @@ import com.example.pillpalmobile.navigation.BottomNavBar
 import com.example.pillpalmobile.network.RetrofitClient
 import kotlinx.coroutines.launch
 import coil.compose.rememberAsyncImagePainter
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import android.os.Build
+
+
 
 
 // https://developer.android.com/develop/ui/views/text-and-emoji/fonts-in-xml
 // FONTS USED FROM : https://fonts.google.com/ (montserrat, inter, pixelify sans) and https://developer.apple.com/fonts//https://github.com/ravijoon/SF-Pro-Expanded-Font/blob/main/SF-Pro.ttf (sf pro)
 
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        RetrofitClient.initialize(applicationContext)
+
+        lifecycleScope.launch {
+            AuthStore.loadToken(applicationContext)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
+        }
+
+
         enableEdgeToEdge()
         setContent {
-            val navController = rememberNavController()
             PillPalMobileTheme {
                 MainApp()
             }
@@ -76,19 +90,48 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+
+
 @Composable
 fun MainApp() {
+    val context = LocalContext.current
+
+
+    var appReady by remember { mutableStateOf(false) }
+
     var showSplash by remember { mutableStateOf(true) }
 
-    if (showSplash) {
-        SplashScreen {
-            showSplash = false
-        }
-    } else {
-        val navController = rememberNavController()
-        AppNavGraph(navController)
+
+    LaunchedEffect(Unit) {
+        AuthStore.loadToken(context)
+        appReady = true
     }
+
+
+    if (!appReady) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+
+    if (showSplash) {
+        SplashScreen { showSplash = false }
+        return
+    }
+
+
+    val navController = rememberNavController()
+    AppNavGraph(navController)
 }
+
+
+
 
 
 @Composable

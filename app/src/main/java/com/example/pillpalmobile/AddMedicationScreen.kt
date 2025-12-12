@@ -74,16 +74,16 @@ fun AddMedicationScreen(
     // notes
     var notes by remember { mutableStateOf("") }
 
-    // save dialogs and error handling
+
     var showSaveConfirmDialog by remember { mutableStateOf(false) }
     var showSaveSuccessDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
-    // validation - name must not be empty
+
     val canSave = name.isNotBlank()
 
-    // function to save medication to backend
+
     fun saveMedicationToBackend() {
         scope.launch {
             try {
@@ -94,12 +94,12 @@ fun AddMedicationScreen(
                     return@launch
                 }
 
-                // prepare day mask for weekly repeat
+
                 val dayMask = if (howOften == "Weekly") {
                     selectedDays.joinToString("") { if (it) "1" else "0" }
                 } else null
 
-                // convert dates to yyyy-MM-dd format for backend
+
                 val customStart = if (howOften == "Custom" && startDateValue != null) {
                     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(startDateValue!!))
                 } else null
@@ -107,6 +107,19 @@ fun AddMedicationScreen(
                 val customEnd = if (howOften == "Custom" && endDateValue != null) {
                     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(endDateValue!!))
                 } else null
+
+
+                val onceDate = if (!repeatEnabled) {
+                    try {
+                        val inputFormat = SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault())
+                        val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val date = inputFormat.parse(medicationDate)
+                        outputFormat.format(date!!)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } else null
+
 
                 val scheduleRequest = ScheduleRequest(
                     repeat_type = when {
@@ -116,11 +129,24 @@ fun AddMedicationScreen(
                         howOften == "Custom" -> "custom"
                         else -> "daily"
                     },
+
                     day_mask = dayMask,
+
                     times = times.toList(),
-                    custom_start = customStart,
-                    custom_end = customEnd
+
+                    custom_start = when {
+                        !repeatEnabled -> onceDate
+                        howOften == "Custom" -> customStart
+                        else -> null
+                    },
+
+                    custom_end = when {
+                        !repeatEnabled -> onceDate
+                        howOften == "Custom" -> customEnd
+                        else -> null
+                    }
                 )
+
 
                 val request = AddMedicationRequest(
                     name = name,
@@ -128,10 +154,8 @@ fun AddMedicationScreen(
                     schedule = scheduleRequest
                 )
 
-                val response = RetrofitClient.medicationService.addMedication(
-                    token = "Bearer $token",
-                    medication = request
-                )
+                val response = RetrofitClient.medicationService.addMedication(request)
+
 
                 if (response.isSuccessful) {
                     showSaveSuccessDialog = true

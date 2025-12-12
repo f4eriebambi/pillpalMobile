@@ -12,15 +12,40 @@ val Context.dataStore by preferencesDataStore("auth")
 object AuthStore {
     private val TOKEN_KEY = stringPreferencesKey("auth_token")
 
-    suspend fun saveToken(context: Context, token: String) {
-        context.dataStore.edit { it[TOKEN_KEY] = token }
+
+    @Volatile
+    private var cachedToken: String? = null
+
+
+    suspend fun loadToken(context: Context) {
+        cachedToken = context.dataStore.data
+            .map { prefs -> prefs[TOKEN_KEY] }
+            .first()
     }
 
+    fun getCachedToken(): String? = cachedToken
+
+
     suspend fun getToken(context: Context): String? {
-        return context.dataStore.data.map { it[TOKEN_KEY] }.first()
+        val token = context.dataStore.data
+            .map { prefs -> prefs[TOKEN_KEY] }
+            .first()
+
+        cachedToken = token
+        return token
+    }
+
+    suspend fun saveToken(context: Context, token: String) {
+        context.dataStore.edit { prefs ->
+            prefs[TOKEN_KEY] = token
+        }
+        cachedToken = token
     }
 
     suspend fun clearToken(context: Context) {
-        context.dataStore.edit { it.remove(TOKEN_KEY) }
+        context.dataStore.edit { prefs ->
+            prefs.remove(TOKEN_KEY)
+        }
+        cachedToken = null
     }
 }

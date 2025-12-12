@@ -1,38 +1,56 @@
 package com.example.pillpalmobile.network
 
+import android.content.Context
+import com.example.pillpalmobile.data.AuthStore
+import com.example.pillpalmobile.network.SettingsService
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Header
 
 object RetrofitClient {
 
-//    private const val BASE_URL = "http://192.168.1.14:5000/"
-     private const val BASE_URL = "http://10.0.2.2:5000/"
+    private const val BASE_URL = "https://pillpal.space/"
 
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+    private lateinit var appContext: Context
+
+    fun initialize(context: Context) {
+        appContext = context.applicationContext
     }
 
-    val authService: AuthService by lazy {
-        retrofit.create(AuthService::class.java)
+    private val authInterceptor = Interceptor { chain ->
+        val original = chain.request()
+
+
+        val token = AuthStore.getCachedToken()
+
+        val newRequest = if (!token.isNullOrEmpty()) {
+            original.newBuilder()
+                .addHeader("Authorization", "Bearer $token")
+                .build()
+        } else {
+            original
+        }
+
+        chain.proceed(newRequest)
     }
 
-    val medicationService: MedicationService by lazy {
-        retrofit.create(MedicationService::class.java)
-    }
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor)
+        .build()
 
-    val historyService: HistoryService by lazy {
-        retrofit.create(HistoryService::class.java)
-    }
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
 
-    val calendarService: CalendarService by lazy {
-        retrofit.create(CalendarService::class.java)
-    }
-
-
+    val authService: AuthService = retrofit.create(AuthService::class.java)
+    val medicationService: MedicationService = retrofit.create(MedicationService::class.java)
+    val historyService: HistoryService = retrofit.create(HistoryService::class.java)
+    val calendarService: CalendarService = retrofit.create(CalendarService::class.java)
+    val settingsService: SettingsService = retrofit.create(SettingsService::class.java)
+    val deviceApi: DeviceService by lazy { retrofit.create(DeviceService::class.java) }
 
 }

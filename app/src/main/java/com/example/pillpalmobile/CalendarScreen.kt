@@ -71,7 +71,6 @@ fun CalendarScreen(
             val token = AuthStore.getToken(context)
             if (token != null) {
                 dayDoses = RetrofitClient.calendarService.getDosesForDay(
-                    "Bearer $token",
                     selectedDate.value.toString()
                 )
             }
@@ -88,7 +87,6 @@ fun CalendarScreen(
                 val token = AuthStore.getToken(context)
                 if (token != null) {
                     dayDoses = RetrofitClient.calendarService.getDosesForDay(
-                        "Bearer $token",
                         selectedDate.value.toString()
                     )
                 }
@@ -202,12 +200,12 @@ fun updateDoseStatus(
             Log.d("CALENDAR", "Updating instance $instanceId → $status")
 
             RetrofitClient.calendarService.updateDoseStatus(
-                "Bearer $token",
                 mapOf(
                     "instance_id" to instanceId,
                     "status" to status
                 )
             )
+
 
             // Switch back to Main for UI
             withContext(Dispatchers.Main) {
